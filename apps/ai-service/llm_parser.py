@@ -11,7 +11,7 @@ class LLMParser:
         if not api_key:
             print("Warning: GEMINI_API_KEY not found in environment")
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
     async def parse_ocr_text(self, text: str):
         prompt = f"""

@@ -119,3 +119,37 @@ export const completeTask = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+// Admin Endpoints
+export const getAllTasks = async (req: Request, res: Response) => {
+  try {
+    const tasks = await Task.find({}).sort({ createdAt: -1 });
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const verifyTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id);
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+    
+    task.status = 'VERIFIED';
+    await task.save();
+    res.json(task);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const deleteTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    await Task.findByIdAndDelete(id);
+    res.json({ message: 'Task deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};

@@ -9,15 +9,18 @@ import { UploadCloud, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 
+import Sidebar from "@/components/Sidebar";
+
 export default function NewSurveyPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  
+
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-  
+
   // Manual Entry State
   const [activeTab, setActiveTab] = useState<'ai' | 'manual'>('ai');
   const [manualData, setManualData] = useState({
@@ -31,6 +34,24 @@ export default function NewSurveyPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -52,7 +73,7 @@ export default function NewSurveyPage() {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
+
       setStatus('success');
       setMessage('Survey uploaded successfully! The AI is analyzing the document.');
       setTimeout(() => router.push('/dashboard'), 3000);
@@ -77,7 +98,7 @@ export default function NewSurveyPage() {
         description: manualData.description,
         coordinates: [Number(manualData.lng), Number(manualData.lat)]
       });
-      
+
       setStatus('success');
       setMessage('Task created manually and added to the heatmap!');
       setTimeout(() => router.push('/dashboard'), 2000);
@@ -90,8 +111,10 @@ export default function NewSurveyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="flex h-screen bg-gray-50">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-8">
+        {/* <div className="max-w-2xl mx-auto"> */}
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Add Community Data</h1>
@@ -104,13 +127,13 @@ export default function NewSurveyPage() {
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="flex border-b">
-            <button 
+            <button
               className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider ${activeTab === 'ai' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
               onClick={() => setActiveTab('ai')}
             >
               AI OCR Upload
             </button>
-            <button 
+            <button
               className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider ${activeTab === 'manual' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
               onClick={() => setActiveTab('manual')}
             >
@@ -121,8 +144,15 @@ export default function NewSurveyPage() {
           <div className="p-8">
             {activeTab === 'ai' ? (
               <form onSubmit={handleFileUpload} className="space-y-6">
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-12 text-center hover:bg-gray-50 transition-colors">
-                  <UploadCloud className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <div 
+                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
+                    isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
                   <div className="flex text-sm text-gray-600 justify-center">
                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-bold text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 px-2">
                       <span>Upload a file</span>
@@ -133,7 +163,7 @@ export default function NewSurveyPage() {
                   <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
                   {file && <p className="mt-4 text-sm font-bold text-green-600">Selected: {file.name}</p>}
                 </div>
-                
+
                 <Button type="submit" className="w-full h-12 text-lg" disabled={!file || isUploading} isLoading={isUploading}>
                   Process with AI
                 </Button>
@@ -143,10 +173,10 @@ export default function NewSurveyPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-gray-900">Category</label>
-                    <select 
+                    <select
                       className="flex h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:ring-2 focus:ring-blue-500"
                       value={manualData.category}
-                      onChange={e => setManualData({...manualData, category: e.target.value})}
+                      onChange={e => setManualData({ ...manualData, category: e.target.value })}
                     >
                       <option>Sanitation</option>
                       <option>Medical</option>
@@ -155,36 +185,36 @@ export default function NewSurveyPage() {
                       <option>Other</option>
                     </select>
                   </div>
-                  <Input 
-                    label="Urgency Score (1-5)" 
+                  <Input
+                    label="Urgency Score (1-5)"
                     type="number" min="1" max="5" required
                     value={manualData.urgencyScore}
-                    onChange={e => setManualData({...manualData, urgencyScore: e.target.value})}
+                    onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })}
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-6">
-                  <Input 
+                  <Input
                     label="Latitude" placeholder="e.g. 12.97" required
                     value={manualData.lat}
-                    onChange={e => setManualData({...manualData, lat: e.target.value})}
+                    onChange={e => setManualData({ ...manualData, lat: e.target.value })}
                   />
-                  <Input 
+                  <Input
                     label="Longitude" placeholder="e.g. 77.59" required
                     value={manualData.lng}
-                    onChange={e => setManualData({...manualData, lng: e.target.value})}
+                    onChange={e => setManualData({ ...manualData, lng: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold text-gray-900">Description</label>
-                  <textarea 
+                  <textarea
                     required
                     className="flex w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                     value={manualData.description}
-                    onChange={e => setManualData({...manualData, description: e.target.value})}
+                    onChange={e => setManualData({ ...manualData, description: e.target.value })}
                     placeholder="Describe the community need..."
                   />
                 </div>
-                
+
                 <Button type="submit" className="w-full h-12 text-lg" disabled={isUploading} isLoading={isUploading}>
                   Add to Heatmap
                 </Button>
@@ -197,7 +227,7 @@ export default function NewSurveyPage() {
                 <p className="text-sm text-green-800 font-medium">{message}</p>
               </div>
             )}
-            
+
             {status === 'error' && (
               <div className="mt-6 p-4 bg-red-50 rounded-lg flex items-start border border-red-200">
                 <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
@@ -206,7 +236,7 @@ export default function NewSurveyPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

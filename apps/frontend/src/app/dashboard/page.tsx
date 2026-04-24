@@ -10,6 +10,8 @@ import axios from "axios";
 import { useState } from "react";
 import Link from "next/link";
 
+import Sidebar from "@/components/Sidebar";
+
 const MapboxHeatmap = dynamic(() => import("@/components/Heatmap"), { ssr: false });
 
 export default function DashboardPage() {
@@ -66,32 +68,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md">
-        <div className="flex h-20 items-center px-6 border-b">
-          <span className="text-xl font-bold text-blue-600">NexusImpact</span>
-        </div>
-        <nav className="mt-6 px-4 space-y-2">
-          <Link href="/dashboard" className="flex items-center px-4 py-2 text-gray-900 bg-gray-100 rounded-md">
-            <LayoutDashboard className="mr-3 h-5 w-5" />
-            Dashboard
-          </Link>
-          <a href="#" className="flex items-center px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
-            <MapIcon className="mr-3 h-5 w-5" />
-            Heatmap
-          </a>
-          <Link href="/surveys/new" className="flex items-center px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
-            <PlusCircle className="mr-3 h-5 w-5" />
-            Add Data
-          </Link>
-          {user.role === 'NGO_ADMIN' && (
-            <a href="#" className="flex items-center px-4 py-2 text-gray-900 hover:bg-gray-50 rounded-md transition-colors">
-              <Users className="mr-3 h-5 w-5" />
-              Volunteers
-            </a>
-          )}
-        </nav>
-      </aside>
+      <Sidebar />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
