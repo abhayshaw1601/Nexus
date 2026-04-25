@@ -33,9 +33,6 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col transition-colors duration-300">
         <Providers>
-          <div className="fixed top-6 right-6 z-50">
-            <ModeToggle />
-          </div>
           {children}
         </Providers>
       </body>

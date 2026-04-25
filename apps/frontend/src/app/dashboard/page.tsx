@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="flex h-20 items-center justify-between px-8 bg-card border-b border-border shadow-sm transition-colors duration-300">
+        <header className="flex h-20 items-center justify-between px-8 bg-card/80 backdrop-blur-md border-b border-border shadow-sm transition-colors duration-300">
           <h1 className="text-2xl font-semibold text-foreground">Welcome, {user.name}</h1>
           <div className="flex items-center space-x-4">
             <span className="text-sm font-bold text-foreground bg-muted px-3 py-1 rounded-full uppercase tracking-wider">

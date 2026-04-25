@@ -9,19 +9,21 @@ export function ModeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
-  // Avoid hydration mismatch
+  // Avoid hydration mismatch by only rendering after mounting
   React.useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) return <div className="w-9 h-9" />;
+  if (!mounted) {
+    return <div className="w-9 h-9" />; // Placeholder to avoid layout shift
+  }
 
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="rounded-full w-9 h-9 flex items-center justify-center transition-all duration-300"
+      className="rounded-full w-9 h-9 flex items-center justify-center transition-all duration-300 hover:bg-muted"
       aria-label="Toggle theme"
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
