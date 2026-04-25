@@ -19,13 +19,19 @@
   --accent-foreground: 0 0% 9%;
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 10%;
-  --input: 0 0% 10%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
   --ring: 219 100% 50%;
-  --radius: 0.25rem;
+  --radius: 0.5rem;
   
   --font-heading: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Inter', sans-serif;
+
+  --urgency-1: 217 91% 60%;
+  --urgency-2: 180 100% 45%;
+  --urgency-3: 60 100% 45%;
+  --urgency-4: 30 100% 50%;
+  --urgency-5: 0 100% 50%;
 }
 
 .dark {
@@ -45,12 +51,18 @@
   --accent-foreground: 0 0% 98%;
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 98%;
-  --input: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
   --ring: 219 100% 60%;
+
+  --urgency-1: 217 91% 50%;
+  --urgency-2: 180 100% 40%;
+  --urgency-3: 60 100% 40%;
+  --urgency-4: 30 100% 45%;
+  --urgency-5: 0 100% 45%;
 }
 
-@theme inline {
+@theme {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -73,18 +85,17 @@
   
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
+
+  --color-urgency-1: hsl(var(--urgency-1));
+  --color-urgency-2: hsl(var(--urgency-2));
+  --color-urgency-3: hsl(var(--urgency-3));
+  --color-urgency-4: hsl(var(--urgency-4));
+  --color-urgency-5: hsl(var(--urgency-5));
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
-    border-width: 0;
-    border-style: solid;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    letter-spacing: -0.02em;
   }
   
   body {

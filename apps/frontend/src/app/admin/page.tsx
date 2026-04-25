@@ -99,25 +99,39 @@ export default function AdminPage() {
         </div>
 
         {activeTab === 'tasks' && (
-          <div className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
             <table className="w-full text-left">
               <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-bold tracking-widest border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Description</th>
                   <th className="px-6 py-4">Category</th>
+                  <th className="px-6 py-4">Urgency</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {tasks.map((task) => (
-                  <tr key={task._id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={task._id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-6 py-4 text-sm text-foreground font-medium">{task.description || "No description"}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{task.category}</td>
                     <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1" title={`Urgency Score: ${task.urgencyScore}`}>
+                        <div className="w-16 h-1.5 bg-muted dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                          <div 
+                            className="h-full absolute left-0 top-0 transition-all duration-1000 ease-out rounded-full"
+                            style={{ 
+                              width: `${((task.urgencyScore || 0) / 5) * 100}%`,
+                              background: 'linear-gradient(to right, #3b82f6, #06b6d4, #eab308, #f97316, #ef4444)'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        task.status === 'VERIFIED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
-                        task.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                        task.status === 'VERIFIED' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                        task.status === 'COMPLETED' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
                         'bg-muted text-muted-foreground'
                       }`}>
                         {task.status}
@@ -125,11 +139,11 @@ export default function AdminPage() {
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {task.status !== 'VERIFIED' && (
-                        <Button size="sm" variant="outline" className="text-green-600 border-green-200 dark:border-green-900/50 hover:bg-green-50 dark:hover:bg-green-900/20" onClick={() => handleVerify(task._id)}>
+                        <Button size="sm" variant="outline" className="text-green-600 border-green-500/50 hover:bg-green-500/10 dark:text-green-400 dark:border-green-400/30 dark:hover:bg-green-400/10" onClick={() => handleVerify(task._id)}>
                           <CheckCircle2 className="h-4 w-4 mr-1" /> Verify
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" className="text-red-600 border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(task._id)}>
+                      <Button size="sm" variant="outline" className="text-red-600 border-red-500/50 hover:bg-red-500/10 dark:text-red-400 dark:border-red-400/30 dark:hover:bg-red-400/10" onClick={() => handleDelete(task._id)}>
                         <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>
                     </td>
@@ -141,9 +155,9 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'users' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-900 text-xs uppercase font-bold tracking-widest border-b">
+              <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-bold tracking-widest border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Email</th>
@@ -151,17 +165,17 @@ export default function AdminPage() {
                   <th className="px-6 py-4">Joined</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {users.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{user.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{user.email}</td>
+                  <tr key={user._id} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-6 py-4 text-sm text-foreground font-medium">{user.name}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{user.email}</td>
                     <td className="px-6 py-4">
-                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-bold uppercase">
+                      <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded text-xs font-bold uppercase">
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                   </tr>

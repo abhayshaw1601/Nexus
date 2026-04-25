@@ -182,7 +182,7 @@ export default function DashboardPage() {
             const filtered = filterCategory === "ALL" ? tasks : tasks.filter(t => t.category === filterCategory);
             const displayed = showAll ? filtered : filtered.slice(0, 5);
             return (
-              <div className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
+              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
                 <div className="p-6 border-b border-border flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <h2 className="text-lg font-bold text-foreground">Community Reports</h2>
@@ -207,7 +207,7 @@ export default function DashboardPage() {
                     {filtered.length > 5 && (
                       <Button
                         size="sm"
-                        variant={showAll ? "outline" : "default"}
+                        variant={showAll ? "outline" : "primary"}
                         onClick={() => setShowAll(!showAll)}
                       >
                         {showAll ? "Show Less" : `View All (${filtered.length})`}
@@ -239,16 +239,20 @@ export default function DashboardPage() {
                             }
                           }}
                         >
-                          <td className="px-6 py-4 text-sm text-foreground font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{task.description || "No description provided"}</td>
+                          <td className="px-6 py-4 text-sm text-foreground font-medium group-hover:text-primary transition-colors">{task.description || "No description provided"}</td>
                           <td className="px-6 py-4 text-sm text-muted-foreground">{task.category}</td>
                           <td className="px-6 py-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                              task.urgencyScore >= 4 
-                                ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' 
-                                : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                            }`}>
-                              Score: {task.urgencyScore}
-                            </span>
+                            <div className="flex flex-col gap-1" title={`Urgency Score: ${task.urgencyScore}`}>
+                              <div className="w-20 h-1.5 bg-muted dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                                <div 
+                                  className="h-full absolute left-0 top-0 transition-all duration-1000 ease-out rounded-full"
+                                  style={{ 
+                                    width: `${((task.urgencyScore || 0) / 5) * 100}%`,
+                                    background: 'linear-gradient(to right, #3b82f6, #06b6d4, #eab308, #f97316, #ef4444)'
+                                  }}
+                                />
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
@@ -267,7 +271,7 @@ export default function DashboardPage() {
                               )}
                               {task.status === 'ASSIGNED' && task.assignedVolunteerId === (session?.user as any)?.id && (
                                 <div onClick={(e) => e.stopPropagation()}>
-                                  <label className="cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-1.5 px-3 rounded">
+                                  <label className="cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-1.5 px-3 rounded transition-colors">
                                     Submit Proof
                                     <input 
                                       type="file" 
@@ -303,7 +307,7 @@ export default function DashboardPage() {
                   <div className="px-6 py-3 border-t border-border bg-muted/30 text-center">
                     <button
                       onClick={() => setShowAll(true)}
-                      className="text-xs font-bold text-primary hover:text-primary/80 uppercase tracking-wider transition-colors"
+                      className="text-xs font-bold text-primary hover:text-primary transition-all uppercase tracking-wider"
                     >
                       Showing {displayed.length} of {filtered.length} — Click to expand
                     </button>
