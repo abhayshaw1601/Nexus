@@ -14,12 +14,10 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
 
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: 'nexus_id_proofs',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    };
-  },
+  params: {
+    folder: 'nexus_id_proofs',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+  } as any,
 });
 
 export const uploadIdProof = multer({ storage: storage });

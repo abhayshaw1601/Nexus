@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-
 import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes';
@@ -48,7 +47,6 @@ io.on('connection', (socket) => {
   socket.on('volunteer_location_update', async (data: { userId: string; coordinates: [number, number], isOnDuty: boolean }) => {
     try {
       const { userId, coordinates, isOnDuty } = data;
-      // We import User inside the event to avoid top-level issues, or just use mongoose.model
       const User = mongoose.model('User');
       await User.findByIdAndUpdate(userId, {
         isOnDuty,
