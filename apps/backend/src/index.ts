@@ -1,7 +1,8 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
+
 import mongoose from 'mongoose';
 
 import authRoutes from './routes/authRoutes';
@@ -10,11 +11,11 @@ import taskRoutes from './routes/taskRoutes';
 import userRoutes from './routes/userRoutes';
 import workerRoutes from './routes/workerRoutes';
 import ngoRoutes from './routes/ngoRoutes';
+import volunteerRoutes from './routes/volunteerRoutes';
+import adminRoutes from './routes/adminRoutes';
 
 import { Server } from 'socket.io';
 import http from 'http';
-
-dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -44,6 +45,24 @@ io.on('connection', (socket) => {
     console.log(`User ${userId} joined their notification room`);
   });
 
+  socket.on('volunteer_location_update', async (data: { userId: string; coordinates: [number, number], isOnDuty: boolean }) => {
+    try {
+      const { userId, coordinates, isOnDuty } = data;
+      // We import User inside the event to avoid top-level issues, or just use mongoose.model
+      const User = mongoose.model('User');
+      await User.findByIdAndUpdate(userId, {
+        isOnDuty,
+        lastLocation: {
+          type: 'Point',
+          coordinates
+        }
+      });
+      console.log(`Updated location for volunteer ${userId}. On Duty: ${isOnDuty}`);
+    } catch (error) {
+      console.error('Error updating volunteer location via socket:', error);
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected');
   });
@@ -55,6 +74,8 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/worker', workerRoutes);
 app.use('/api/ngo', ngoRoutes);
+app.use('/api/volunteer', volunteerRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'NexusImpact Backend API is running' });

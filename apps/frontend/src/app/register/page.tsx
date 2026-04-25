@@ -28,7 +28,13 @@ export default function RegisterPage() {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, formData);
       router.push("/login");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      if (err.response?.data?.errors && Array.isArray(err.response.data.errors)) {
+        // Handle Zod validation errors
+        const errorMessages = err.response.data.errors.map((e: any) => `${e.path.join('.')}: ${e.message}`);
+        setError(errorMessages.join(', '));
+      } else {
+        setError(err.response?.data?.message || "Registration failed");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -67,6 +73,7 @@ export default function RegisterPage() {
               label="Password"
               type="password"
               required
+              minLength={6}
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="••••••••"
