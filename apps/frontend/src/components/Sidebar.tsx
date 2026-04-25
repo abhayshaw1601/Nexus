@@ -26,10 +26,12 @@ export default function Sidebar() {
           <LayoutDashboard className="mr-3 h-5 w-5" />
           Dashboard
         </Link>
-        <Link href="/surveys/new" className={`flex items-center px-4 py-2 rounded-md transition-colors ${isActive('/surveys/new')}`}>
-          <PlusCircle className="mr-3 h-5 w-5" />
-          Add Data
-        </Link>
+        {(user.role === 'NGO_ADMIN' || user.role === 'FIELD_WORKER') && (
+          <Link href="/surveys/new" className={`flex items-center px-4 py-2 rounded-md transition-colors ${isActive('/surveys/new')}`}>
+            <PlusCircle className="mr-3 h-5 w-5" />
+            Add Data
+          </Link>
+        )}
         {user.role === 'NGO_ADMIN' && (
           <Link href="/admin" className={`flex items-center px-4 py-2 rounded-md transition-colors ${isActive('/admin')}`}>
             <Users className="mr-3 h-5 w-5" />

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { UploadCloud, CheckCircle2, AlertCircle, FileText } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, FileText, MapPin } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 
@@ -110,6 +110,25 @@ export default function NewSurveyPage() {
     }
   };
 
+  const handleGetCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setManualData({
+            ...manualData,
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6),
+          });
+        },
+        (error) => {
+          alert("Unable to retrieve your location. Please check your browser permissions.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
@@ -192,7 +211,18 @@ export default function NewSurveyPage() {
                     onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-sm font-bold text-gray-900">Coordinates</h3>
+                  <button 
+                    type="button"
+                    onClick={handleGetCurrentLocation}
+                    className="flex items-center text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    <MapPin className="h-3 w-3 mr-1" />
+                    Use My Location
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-6 mt-2">
                   <Input
                     label="Latitude" placeholder="e.g. 12.97" required
                     value={manualData.lat}
