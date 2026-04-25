@@ -52,6 +52,10 @@ export default function Sidebar() {
               <CheckCircle className="mr-3 h-4 w-4 stroke-[1.5pt]" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verification</span>
             </Link>
+            <Link href="/admin/volunteers" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/admin/volunteers')}`}>
+              <Users className="mr-3 h-4 w-4 stroke-[1.5pt]" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Volunteer Requests</span>
+            </Link>
             <Link href="/admin" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/admin')}`}>
               <Users className="mr-3 h-4 w-4 stroke-[1.5pt]" />
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Admin Panel</span>
