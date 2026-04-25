@@ -35,19 +35,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 transition-colors duration-500 relative">
-      <div className="w-full max-w-md space-y-8 bg-card dark:bg-zinc-900/50 dark:backdrop-blur-xl p-8 rounded-2xl shadow-xl border border-border transition-all duration-500">
-        <div className="text-center">
-          <Heart className="mx-auto h-12 w-12 text-blue-600 dark:text-blue-500" />
-          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
-            Join NexusImpact
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground font-medium">
-            Create an account to start helping your community
-          </p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 transition-colors duration-500">
+      <div className="w-full max-w-md space-y-12 neo-border bg-card p-12 rounded-[4px] transition-all duration-500">
+        <div className="text-center space-y-6">
+          <Heart className="mx-auto h-12 w-12 text-primary stroke-[1.5pt]" />
+          <div className="space-y-2">
+            <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase">
+              JOIN<br />[NEXUS]
+            </h2>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">
+              Create an account for human impact
+            </p>
+          </div>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+        <form className="space-y-8" onSubmit={handleSubmit}>
+          <div className="space-y-6">
             <Input
               label="Full Name"
               required
@@ -71,10 +73,10 @@ export default function RegisterPage() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="••••••••"
             />
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-foreground dark:text-zinc-300 transition-colors">Role</label>
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Role</label>
               <select
-                className="flex h-11 w-full rounded-lg border border-input bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:ring-blue-600/50 transition-all duration-300"
+                className="flex h-12 w-full rounded-[4px] border-2 border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
@@ -85,23 +87,23 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400 font-bold">{error}</p>}
+          {error && <p className="text-[10px] font-bold text-destructive uppercase tracking-[0.2em]">{error}</p>}
 
           <div>
             <Button
               type="submit"
-              className="w-full h-11 text-base font-bold"
+              className="w-full h-14"
               isLoading={isLoading}
             >
-              Register
+              Initialize Profile
             </Button>
           </div>
 
-          <div className="text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
+          <div className="text-center">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Already have an account? </span>
             <Link
               href="/login"
-              className="font-bold text-blue-600 dark:text-blue-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:underline underline-offset-4"
             >
               Sign in
             </Link>
