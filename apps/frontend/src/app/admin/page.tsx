@@ -33,9 +33,12 @@ export default function AdminPage() {
 
   const fetchData = async () => {
     try {
+      const config = {
+        headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
+      };
       const [tasksRes, usersRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tasks/all`),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users`)
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tasks/all`, config),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/users`, config)
       ]);
       setTasks(tasksRes.data);
       setUsers(usersRes.data);
@@ -46,7 +49,9 @@ export default function AdminPage() {
 
   const handleVerify = async (taskId: string) => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/verify`);
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/verify`, {}, {
+        headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
+      });
       fetchData();
     } catch (error) {
       alert("Failed to verify task");
@@ -56,7 +61,9 @@ export default function AdminPage() {
   const handleDelete = async (taskId: string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}`, {
+        headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
+      });
       fetchData();
     } catch (error) {
       alert("Failed to delete task");
@@ -66,25 +73,25 @@ export default function AdminPage() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background transition-colors duration-300">
       <Sidebar />
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-8 flex flex-col">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">
+          <h1 className="text-3xl font-extrabold text-foreground">
             {activeTab === 'tasks' ? 'Task Review Dashboard' : 'User Management'}
           </h1>
           <div className="flex gap-4">
             <button 
               onClick={() => setActiveTab('tasks')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'tasks' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'tasks' ? 'bg-blue-600 text-white font-bold' : 'bg-muted text-foreground hover:bg-accent'}`}
             >
               Task Review
             </button>
             <button 
               onClick={() => setActiveTab('users')}
-              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'users' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'}`}
+              className={`px-4 py-2 rounded-md transition-colors ${activeTab === 'users' ? 'bg-blue-600 text-white font-bold' : 'bg-muted text-foreground hover:bg-accent'}`}
             >
               User Management
             </button>
@@ -92,9 +99,9 @@ export default function AdminPage() {
         </div>
 
         {activeTab === 'tasks' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
             <table className="w-full text-left">
-              <thead className="bg-gray-50 text-gray-900 text-xs uppercase font-bold tracking-widest border-b">
+              <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-bold tracking-widest border-b border-border">
                 <tr>
                   <th className="px-6 py-4">Description</th>
                   <th className="px-6 py-4">Category</th>
@@ -102,27 +109,27 @@ export default function AdminPage() {
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-border">
                 {tasks.map((task) => (
-                  <tr key={task._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-sm text-gray-900 font-medium">{task.description || "No description"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{task.category}</td>
+                  <tr key={task._id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-4 text-sm text-foreground font-medium">{task.description || "No description"}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{task.category}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                        task.status === 'VERIFIED' ? 'bg-green-100 text-green-800' :
-                        task.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
+                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        task.status === 'VERIFIED' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                        task.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400' :
+                        'bg-muted text-muted-foreground'
                       }`}>
                         {task.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
                       {task.status !== 'VERIFIED' && (
-                        <Button size="sm" variant="outline" className="text-green-600 border-green-200 hover:bg-green-50" onClick={() => handleVerify(task._id)}>
+                        <Button size="sm" variant="outline" className="text-green-600 border-green-200 dark:border-green-900/50 hover:bg-green-50 dark:hover:bg-green-900/20" onClick={() => handleVerify(task._id)}>
                           <CheckCircle2 className="h-4 w-4 mr-1" /> Verify
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleDelete(task._id)}>
+                      <Button size="sm" variant="outline" className="text-red-600 border-red-200 dark:border-red-900/50 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => handleDelete(task._id)}>
                         <Trash2 className="h-4 w-4 mr-1" /> Delete
                       </Button>
                     </td>

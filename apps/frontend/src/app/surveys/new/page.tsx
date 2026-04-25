@@ -71,7 +71,10 @@ export default function NewSurveyPage() {
     try {
       // Calls the Node.js backend, which then calls the Python AI service
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${(session?.user as any).accessToken}`
+        }
       });
 
       setStatus('success');
@@ -85,26 +88,73 @@ export default function NewSurveyPage() {
     }
   };
 
+  const [surveyId, setSurveyId] = useState<string | null>(null);
+
+  const handleSaveDraft = async () => {
+    if (!session?.user) return;
+    setIsUploading(true);
+    try {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
+        surveyId,
+        category: manualData.category,
+        urgency: Number(manualData.urgencyScore),
+        description: manualData.description,
+        location: {
+          type: 'Point',
+          coordinates: [Number(manualData.lng), Number(manualData.lat)]
+        }
+      }, {
+        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
+      });
+
+      setSurveyId(res.data.survey._id);
+      setStatus('success');
+      setMessage('Draft saved successfully!');
+      setTimeout(() => setStatus('idle'), 2000);
+    } catch (err) {
+      setStatus('error');
+      setMessage('Failed to save draft.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!session?.user) return;
     setIsUploading(true);
     setStatus('idle');
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/tasks/create`, {
-        surveyId: null, // No source survey for manual
+      // First save the draft (or update it)
+      const draftRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
+        surveyId,
         category: manualData.category,
-        urgencyScore: Number(manualData.urgencyScore),
+        urgency: Number(manualData.urgencyScore),
         description: manualData.description,
-        coordinates: [Number(manualData.lng), Number(manualData.lat)]
+        location: {
+          type: 'Point',
+          coordinates: [Number(manualData.lng), Number(manualData.lat)]
+        }
+      }, {
+        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
+      });
+
+      const currentSurveyId = draftRes.data.survey._id;
+
+      // Then submit it
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/submit`, {
+        surveyId: currentSurveyId
+      }, {
+        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
       });
 
       setStatus('success');
-      setMessage('Task created manually and added to the heatmap!');
+      setMessage('Survey submitted for verification!');
       setTimeout(() => router.push('/dashboard'), 2000);
     } catch (err) {
       setStatus('error');
-      setMessage('Failed to create task manually.');
+      setMessage('Failed to submit survey.');
     } finally {
       setIsUploading(false);
     }
@@ -130,30 +180,37 @@ export default function NewSurveyPage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background transition-colors duration-300">
       <Sidebar />
       <main className="flex-1 overflow-y-auto p-8">
-        {/* <div className="max-w-2xl mx-auto"> */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">Add Community Data</h1>
-            <p className="text-gray-600 mt-2">Upload a paper survey for AI processing or enter data manually.</p>
+            <h1 className="text-3xl font-extrabold text-foreground">Add Community Data</h1>
+            <p className="text-muted-foreground mt-2">Upload a paper survey for AI processing or enter data manually.</p>
           </div>
           <Link href="/dashboard">
             <Button variant="outline">Back to Dashboard</Button>
           </Link>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="flex border-b">
+        <div className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-300">
+          <div className="flex border-b border-border">
             <button
-              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider ${activeTab === 'ai' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
+              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
+                activeTab === 'ai' 
+                  ? 'bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-500' 
+                  : 'text-muted-foreground hover:bg-muted dark:hover:bg-zinc-800'
+              }`}
               onClick={() => setActiveTab('ai')}
             >
               AI OCR Upload
             </button>
             <button
-              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider ${activeTab === 'manual' ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700' : 'text-gray-500 hover:bg-gray-50'}`}
+              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
+                activeTab === 'manual' 
+                  ? 'bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-500' 
+                  : 'text-muted-foreground hover:bg-muted dark:hover:bg-zinc-800'
+              }`}
               onClick={() => setActiveTab('manual')}
             >
               Manual Entry
@@ -164,23 +221,25 @@ export default function NewSurveyPage() {
             {activeTab === 'ai' ? (
               <form onSubmit={handleFileUpload} className="space-y-6">
                 <div 
-                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-                    isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:bg-gray-50'
+                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                    isDragging 
+                      ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20' 
+                      : 'border-border dark:border-zinc-700 hover:bg-muted/50 dark:hover:bg-zinc-800/50'
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <div className="flex text-sm text-gray-600 justify-center">
-                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-bold text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 px-2">
+                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                  <div className="flex text-sm text-muted-foreground justify-center">
+                    <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 px-2">
                       <span>Upload a file</span>
                       <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
                     </label>
                     <p className="pl-1">or drag and drop</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 5MB</p>
-                  {file && <p className="mt-4 text-sm font-bold text-green-600">Selected: {file.name}</p>}
+                  <p className="text-xs text-muted-foreground mt-2">PNG, JPG, GIF up to 5MB</p>
+                  {file && <p className="mt-4 text-sm font-bold text-green-600 dark:text-green-400">Selected: {file.name}</p>}
                 </div>
 
                 <Button type="submit" className="w-full h-12 text-lg" disabled={!file || isUploading} isLoading={isUploading}>
@@ -191,9 +250,9 @@ export default function NewSurveyPage() {
               <form onSubmit={handleManualSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-gray-900">Category</label>
+                    <label className="text-sm font-bold text-foreground">Category</label>
                     <select
-                      className="flex h-10 w-full rounded-md border border-gray-300 px-3 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-colors"
                       value={manualData.category}
                       onChange={e => setManualData({ ...manualData, category: e.target.value })}
                     >
@@ -212,11 +271,11 @@ export default function NewSurveyPage() {
                   />
                 </div>
                 <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold text-gray-900">Coordinates</h3>
+                  <h3 className="text-sm font-bold text-foreground">Coordinates</h3>
                   <button 
                     type="button"
                     onClick={handleGetCurrentLocation}
-                    className="flex items-center text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                    className="flex items-center text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
                   >
                     <MapPin className="h-3 w-3 mr-1" />
                     Use My Location
@@ -235,19 +294,30 @@ export default function NewSurveyPage() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-gray-900">Description</label>
+                  <label className="text-sm font-bold text-foreground">Description</label>
                   <textarea
                     required
-                    className="flex w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                    className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 min-h-[100px] transition-colors"
                     value={manualData.description}
                     onChange={e => setManualData({ ...manualData, description: e.target.value })}
                     placeholder="Describe the community need..."
                   />
                 </div>
 
-                <Button type="submit" className="w-full h-12 text-lg" disabled={isUploading} isLoading={isUploading}>
-                  Add to Heatmap
-                </Button>
+                <div className="flex space-x-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="flex-1 h-12 text-lg" 
+                    onClick={handleSaveDraft} 
+                    disabled={isUploading}
+                  >
+                    Save Draft
+                  </Button>
+                  <Button type="submit" className="flex-1 h-12 text-lg" disabled={isUploading} isLoading={isUploading}>
+                    Submit Survey
+                  </Button>
+                </div>
               </form>
             )}
 

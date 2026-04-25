@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 import { Providers } from "@/components/Providers";
+import { ModeToggle } from "@/components/ModeToggle";
 
 export const metadata: Metadata = {
   title: "NexusImpact",
@@ -27,10 +28,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <Providers>{children}</Providers>
+      <body className="min-h-full flex flex-col transition-colors duration-300">
+        <Providers>
+          <div className="fixed top-6 right-6 z-50">
+            <ModeToggle />
+          </div>
+          {children}
+        </Providers>
       </body>
     </html>
   );
