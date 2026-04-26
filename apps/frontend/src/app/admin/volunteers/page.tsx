@@ -134,7 +134,7 @@ export default function VolunteerRequestsPage() {
             <div className="bg-card w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
               <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
                 <h3 className="text-lg font-bold">ID Proof</h3>
-                <Button variant="ghost" size="icon" onClick={() => setSelectedProof(null)}>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedProof(null)}>
                   <X className="w-5 h-5" />
                 </Button>
               </div>
