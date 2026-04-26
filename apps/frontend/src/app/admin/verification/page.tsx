@@ -83,11 +83,21 @@ export default function VerificationQueuePage() {
               <div key={survey._id} className="neo-border bg-card p-10 rounded-[4px] flex flex-col md:flex-row justify-between items-start gap-12 transition-all duration-300">
                 <div className="space-y-8 flex-1">
                   <div className="flex items-center space-x-4">
-                    <span className={`px-4 py-2 rounded-[4px] text-[10px] font-black uppercase tracking-widest ${
-                      survey.urgency >= 4 ? 'bg-red-600 text-white' : 'bg-primary/10 text-primary'
-                    }`}>
-                      URGENCY_{survey.urgency || '0'}
-                    </span>
+                    <div className="flex flex-col gap-1.5" title={`Urgency Level: ${survey.urgency}`}>
+                      <div className="flex justify-between w-24 px-0.5">
+                        <span className="text-[8px] font-black text-muted-foreground">1</span>
+                        <span className="text-[8px] font-black text-muted-foreground">5</span>
+                      </div>
+                      <div className="w-24 h-2 bg-muted dark:bg-zinc-800 rounded-full overflow-hidden relative">
+                        <div 
+                          className="h-full absolute left-0 top-0 transition-all duration-1000 ease-out rounded-full"
+                          style={{ 
+                            width: `${(survey.urgency / 5) * 100}%`,
+                            background: 'linear-gradient(to right, #3b82f6, #06b6d4, #eab308, #f97316, #ef4444)'
+                          }}
+                        />
+                      </div>
+                    </div>
                     <span className="text-[10px] font-black text-foreground bg-muted px-4 py-2 rounded-[4px] uppercase tracking-widest">
                       {survey.category}
                     </span>

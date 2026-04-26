@@ -193,13 +193,13 @@ export default function NewSurveyPage() {
           </Link>
         </div>
 
-        <div className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-300">
+        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-300">
           <div className="flex border-b border-border">
             <button
               className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
                 activeTab === 'ai' 
-                  ? 'bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-500' 
-                  : 'text-muted-foreground hover:bg-muted dark:hover:bg-zinc-800'
+                  ? 'bg-muted text-primary border-b-2 border-primary' 
+                  : 'text-muted-foreground hover:bg-muted/50'
               }`}
               onClick={() => setActiveTab('ai')}
             >
@@ -208,8 +208,8 @@ export default function NewSurveyPage() {
             <button
               className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
                 activeTab === 'manual' 
-                  ? 'bg-blue-50/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-b-2 border-blue-700 dark:border-blue-500' 
-                  : 'text-muted-foreground hover:bg-muted dark:hover:bg-zinc-800'
+                  ? 'bg-muted text-primary border-b-2 border-primary' 
+                  : 'text-muted-foreground hover:bg-muted/50'
               }`}
               onClick={() => setActiveTab('manual')}
             >
@@ -223,16 +223,16 @@ export default function NewSurveyPage() {
                 <div 
                   className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
                     isDragging 
-                      ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20' 
-                      : 'border-border dark:border-zinc-700 hover:bg-muted/50 dark:hover:bg-zinc-800/50'
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:bg-muted/50'
                   }`}
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                 >
-                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-blue-500' : 'text-muted-foreground'}`} />
+                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
                   <div className="flex text-sm text-muted-foreground justify-center">
-                    <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-bold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500 px-2">
+                    <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-bold text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary px-2">
                       <span>Upload a file</span>
                       <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
                     </label>
