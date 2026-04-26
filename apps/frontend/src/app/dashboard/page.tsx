@@ -188,7 +188,7 @@ export default function DashboardPage() {
     return null;
   }
 
-  const user = session.user as any;
+  const user = session!.user as any;
 
   const categories = ["ALL", ...Array.from(new Set(tasks.map(t => t.category).filter(Boolean)))];
   const filtered = filterCategory === "ALL" ? tasks : tasks.filter(t => t.category === filterCategory);
@@ -313,7 +313,7 @@ export default function DashboardPage() {
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
                   </div>
                   {filtered.length > 5 && (
-                    <Button size="sm" variant={showAll ? "outline" : "default"} onClick={() => setShowAll(!showAll)}>
+                    <Button size="sm" variant={showAll ? "outline" : "primary"} onClick={() => setShowAll(!showAll)}>
                       {showAll ? "Show Less" : `View All (${filtered.length})`}
                     </Button>
                   )}
