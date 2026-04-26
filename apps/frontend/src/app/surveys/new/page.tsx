@@ -3,13 +3,39 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { UploadCloud, CheckCircle2, AlertCircle, FileText, MapPin } from "lucide-react";
+import { UploadCloud, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
-
 import Sidebar from "@/components/Sidebar";
+
+const BG    = 'var(--bg)';
+const BLACK = 'var(--border-color)';
+const PUR   = 'var(--pur)';
+const YLW   = 'var(--ylw)';
+const SUCC  = 'var(--accent-success)';
+const CRIT  = 'var(--accent-critical)';
+const WHITE = 'var(--shadow-color)';
+const FG    = 'var(--fg)';
+const CARD  = 'var(--card-bg)';
+
+const inp = {
+  width: '100%', padding: '10px 14px', backgroundColor: 'var(--bg)', border: `2.5px solid ${BLACK}`,
+  boxShadow: `4px 4px 0 ${WHITE}`, fontFamily: "'Space Mono',monospace", fontSize: '0.85rem',
+  color: FG, outline: 'none', boxSizing: 'border-box' as const,
+};
+
+const primaryBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
+  fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.85rem',
+  textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF',
+  border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '14px 24px',
+  cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s', display: 'inline-flex',
+  alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', ...extra,
+});
+
+const secondaryBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
+  ...primaryBtn(extra), backgroundColor: 'var(--bg)', color: FG,
+});
 
 export default function NewSurveyPage() {
   const { data: session } = useSession();
@@ -20,321 +46,238 @@ export default function NewSurveyPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
-
-  // Manual Entry State
   const [activeTab, setActiveTab] = useState<'ai' | 'manual'>('ai');
-  const [manualData, setManualData] = useState({
-    category: 'Sanitation',
-    urgencyScore: '3',
-    description: '',
-    lat: '',
-    lng: ''
-  });
+  const [manualData, setManualData] = useState({ category: 'Sanitation', urgencyScore: '3', description: '', lat: '', lng: '' });
+  const [surveyId, setSurveyId] = useState<string | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setFile(e.dataTransfer.files[0]);
-    }
+    if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
   };
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
-
-    setIsUploading(true);
-    setStatus('idle');
-
+    setIsUploading(true); setStatus('idle');
     const formData = new FormData();
     formData.append('file', file);
-    if (session?.user) {
-      formData.append('fieldWorkerId', (session.user as any).id);
-    }
-
+    if (session?.user) formData.append('fieldWorkerId', (session.user as any).id);
     try {
-      // Calls the Node.js backend, which then calls the Python AI service
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
-        headers: { 
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${(session?.user as any).accessToken}`
-        }
+        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${(session?.user as any).accessToken}` }
       });
-
-      setStatus('success');
-      setMessage('Survey uploaded successfully! The AI is analyzing the document.');
+      setStatus('success'); setMessage('Survey uploaded! AI is analyzing the document.');
       setTimeout(() => router.push('/dashboard'), 3000);
     } catch (err: any) {
-      setStatus('error');
-      setMessage(err.response?.data?.message || 'Failed to upload survey. Is the Python AI service running?');
-    } finally {
-      setIsUploading(false);
-    }
+      setStatus('error'); setMessage(err.response?.data?.message || 'Failed to upload survey.');
+    } finally { setIsUploading(false); }
   };
-
-  const [surveyId, setSurveyId] = useState<string | null>(null);
 
   const handleSaveDraft = async () => {
     if (!session?.user) return;
     setIsUploading(true);
     try {
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
-        surveyId,
-        category: manualData.category,
-        urgency: Number(manualData.urgencyScore),
+        surveyId, category: manualData.category, urgency: Number(manualData.urgencyScore),
         description: manualData.description,
-        location: {
-          type: 'Point',
-          coordinates: [Number(manualData.lng), Number(manualData.lat)]
-        }
-      }, {
-        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
-      });
-
+        location: { type: 'Point', coordinates: [Number(manualData.lng), Number(manualData.lat)] }
+      }, { headers: { Authorization: `Bearer ${(session.user as any).accessToken}` } });
       setSurveyId(res.data.survey._id);
-      setStatus('success');
-      setMessage('Draft saved successfully!');
+      setStatus('success'); setMessage('Draft saved!');
       setTimeout(() => setStatus('idle'), 2000);
-    } catch (err) {
-      setStatus('error');
-      setMessage('Failed to save draft.');
-    } finally {
-      setIsUploading(false);
-    }
+    } catch { setStatus('error'); setMessage('Failed to save draft.'); }
+    finally { setIsUploading(false); }
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user) return;
-    setIsUploading(true);
-    setStatus('idle');
-
+    setIsUploading(true); setStatus('idle');
     try {
-      // First save the draft (or update it)
       const draftRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
-        surveyId,
-        category: manualData.category,
-        urgency: Number(manualData.urgencyScore),
+        surveyId, category: manualData.category, urgency: Number(manualData.urgencyScore),
         description: manualData.description,
-        location: {
-          type: 'Point',
-          coordinates: [Number(manualData.lng), Number(manualData.lat)]
-        }
-      }, {
-        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
-      });
-
+        location: { type: 'Point', coordinates: [Number(manualData.lng), Number(manualData.lat)] }
+      }, { headers: { Authorization: `Bearer ${(session.user as any).accessToken}` } });
       const currentSurveyId = draftRes.data.survey._id;
-
-      // Then submit it
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/submit`, {
-        surveyId: currentSurveyId
-      }, {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/submit`, { surveyId: currentSurveyId }, {
         headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
       });
-
-      setStatus('success');
-      setMessage('Survey submitted for verification!');
+      setStatus('success'); setMessage('Survey submitted for verification!');
       setTimeout(() => router.push('/dashboard'), 2000);
-    } catch (err) {
-      setStatus('error');
-      setMessage('Failed to submit survey.');
-    } finally {
-      setIsUploading(false);
-    }
+    } catch { setStatus('error'); setMessage('Failed to submit survey.'); }
+    finally { setIsUploading(false); }
   };
 
   const handleGetCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setManualData({
-            ...manualData,
-            lat: position.coords.latitude.toFixed(6),
-            lng: position.coords.longitude.toFixed(6),
-          });
-        },
-        (error) => {
-          alert("Unable to retrieve your location. Please check your browser permissions.");
-        }
+        (pos) => setManualData({ ...manualData, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }),
+        () => alert("Unable to retrieve location.")
       );
-    } else {
-      alert("Geolocation is not supported by your browser.");
     }
   };
 
+  const label = (text: string) => (
+    <label style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: FG, display: 'block', marginBottom: 8 }}>
+      {text}
+    </label>
+  );
+
   return (
-    <div className="flex h-screen bg-background transition-colors duration-300">
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: BG }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem', backgroundColor: BG }}>
+
+        {/* Page Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
           <div>
-            <h1 className="text-3xl font-extrabold text-foreground">Add Community Data</h1>
-            <p className="text-muted-foreground mt-2">Upload a paper survey for AI processing or enter data manually.</p>
+            <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '2.2rem', textTransform: 'uppercase', letterSpacing: '-0.04em', color: FG, margin: 0 }}>
+              Add Community Data
+            </h1>
+            <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--muted-fg)', marginTop: 10 }}>
+              Upload a paper survey for AI processing or enter data manually.
+            </p>
           </div>
           <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+            <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              ← Back to Dashboard
+            </button>
           </Link>
         </div>
 
-        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden transition-all duration-300">
-          <div className="flex border-b border-border">
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', marginBottom: '2rem', gap: 0 }}>
+          {(['ai', 'manual'] as const).map((tab) => (
             <button
-              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
-                activeTab === 'ai' 
-                  ? 'bg-muted text-primary border-b-2 border-primary' 
-                  : 'text-muted-foreground hover:bg-muted/50'
-              }`}
-              onClick={() => setActiveTab('ai')}
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: activeTab === tab ? `4px 4px 0 ${WHITE}` : `6px 6px 0 ${WHITE}`, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
             >
-              AI OCR Upload
+              {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
             </button>
-            <button
-              className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider transition-all ${
-                activeTab === 'manual' 
-                  ? 'bg-muted text-primary border-b-2 border-primary' 
-                  : 'text-muted-foreground hover:bg-muted/50'
-              }`}
-              onClick={() => setActiveTab('manual')}
-            >
-              Manual Entry
-            </button>
-          </div>
+          ))}
+        </div>
 
-          <div className="p-8">
-            {activeTab === 'ai' ? (
-              <form onSubmit={handleFileUpload} className="space-y-6">
-                <div 
-                  className={`border-2 border-dashed rounded-xl p-12 text-center transition-all ${
-                    isDragging 
-                      ? 'border-primary bg-primary/5' 
-                      : 'border-border hover:bg-muted/50'
-                  }`}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                >
-                  <UploadCloud className={`mx-auto h-12 w-12 mb-4 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <div className="flex text-sm text-muted-foreground justify-center">
-                    <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-bold text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary px-2">
-                      <span>Upload a file</span>
-                      <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">PNG, JPG, GIF up to 5MB</p>
-                  {file && <p className="mt-4 text-sm font-bold text-green-600 dark:text-green-400">Selected: {file.name}</p>}
-                </div>
+        {/* Main form card */}
+        <div style={{ backgroundColor: 'var(--card-bg)', border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '2.5rem', maxWidth: 800 }}>
 
-                <Button type="submit" className="w-full h-12 text-lg" disabled={!file || isUploading} isLoading={isUploading}>
-                  Process with AI
-                </Button>
-              </form>
-            ) : (
-              <form onSubmit={handleManualSubmit} className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground">Category</label>
-                    <select
-                      className="flex h-11 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 transition-colors"
-                      value={manualData.category}
-                      onChange={e => setManualData({ ...manualData, category: e.target.value })}
-                    >
-                      <option>Sanitation</option>
-                      <option>Medical</option>
-                      <option>Education</option>
-                      <option>Infrastructure</option>
-                      <option>Other</option>
-                    </select>
-                  </div>
-                  <Input
-                    label="Urgency Score (1-5)"
-                    type="number" min="1" max="5" required
-                    value={manualData.urgencyScore}
-                    onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })}
-                  />
+          {/* ─ AI Tab ─ */}
+          {activeTab === 'ai' && (
+            <form onSubmit={handleFileUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div
+                onDragOver={(e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
+                style={{ border: `2.5px dashed ${isDragging ? PUR : BLACK}`, backgroundColor: isDragging ? 'rgba(0, 137, 123, 0.1)' : 'var(--bg)', boxShadow: isDragging ? `0 0 0 3px ${PUR}` : 'none', padding: '4rem', textAlign: 'center', transition: 'all 0.15s' }}
+              >
+                <UploadCloud style={{ margin: '0 auto 1rem', width: 48, height: 48, color: isDragging ? PUR : 'var(--muted-fg)', strokeWidth: 1.5 }} />
+                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.85rem', color: 'var(--muted-fg)', marginBottom: 8 }}>
+                  <label htmlFor="file-upload" style={{ cursor: 'pointer', fontWeight: 700, color: FG, textDecoration: 'underline' }}>
+                    Upload a file
+                    <input id="file-upload" type="file" style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+                  </label>
+                  {' '}or drag and drop
                 </div>
-                <div className="flex justify-between items-center">
-                  <h3 className="text-sm font-bold text-foreground">Coordinates</h3>
-                  <button 
-                    type="button"
-                    onClick={handleGetCurrentLocation}
-                    className="flex items-center text-xs font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors"
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)' }}>PNG, JPG, GIF up to 5MB</p>
+                {file && <p style={{ marginTop: 12, fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: SUCC }}>Selected: {file.name}</p>}
+              </div>
+              <button
+                type="submit"
+                disabled={!file || isUploading}
+                style={{ ...primaryBtn(), opacity: (!file || isUploading) ? 0.5 : 1 }}
+                onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
+                onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}
+              >
+                {isUploading ? 'Processing...' : 'Process with AI'}
+              </button>
+            </form>
+          )}
+
+          {/* ─ Manual Tab ─ */}
+          {activeTab === 'manual' && (
+            <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div>
+                  {label('Category')}
+                  <select
+                    style={inp}
+                    value={manualData.category}
+                    onChange={e => setManualData({ ...manualData, category: e.target.value })}
                   >
-                    <MapPin className="h-3 w-3 mr-1" />
-                    Use My Location
+                    {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Other'].map(c => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  {label('Urgency Score (1-5)')}
+                  <input type="number" min="1" max="5" required style={inp} value={manualData.urgencyScore}
+                    onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })} />
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  {label('Coordinates')}
+                  <button type="button" onClick={handleGetCurrentLocation}
+                    style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
+                    onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `3px 3px 0 ${WHITE}`; }}
+                  >
+                    <MapPin style={{ width: 12, height: 12 }} /> Use My Location
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-6 mt-2">
-                  <Input
-                    label="Latitude" placeholder="e.g. 12.97" required
-                    value={manualData.lat}
-                    onChange={e => setManualData({ ...manualData, lat: e.target.value })}
-                  />
-                  <Input
-                    label="Longitude" placeholder="e.g. 77.59" required
-                    value={manualData.lng}
-                    onChange={e => setManualData({ ...manualData, lng: e.target.value })}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                  <div>
+                    {label('Latitude')}
+                    <input type="text" placeholder="e.g. 12.97" required style={inp} value={manualData.lat}
+                      onChange={e => setManualData({ ...manualData, lat: e.target.value })} />
+                  </div>
+                  <div>
+                    {label('Longitude')}
+                    <input type="text" placeholder="e.g. 77.59" required style={inp} value={manualData.lng}
+                      onChange={e => setManualData({ ...manualData, lng: e.target.value })} />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-foreground">Description</label>
-                  <textarea
-                    required
-                    className="flex w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 min-h-[100px] transition-colors"
-                    value={manualData.description}
-                    onChange={e => setManualData({ ...manualData, description: e.target.value })}
-                    placeholder="Describe the community need..."
-                  />
-                </div>
-
-                <div className="flex space-x-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="flex-1 h-12 text-lg" 
-                    onClick={handleSaveDraft} 
-                    disabled={isUploading}
-                  >
-                    Save Draft
-                  </Button>
-                  <Button type="submit" className="flex-1 h-12 text-lg" disabled={isUploading} isLoading={isUploading}>
-                    Submit Survey
-                  </Button>
-                </div>
-              </form>
-            )}
-
-            {status === 'success' && (
-              <div className="mt-6 p-4 bg-green-50 rounded-lg flex items-start border border-green-200">
-                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                <p className="text-sm text-green-800 font-medium">{message}</p>
               </div>
-            )}
 
-            {status === 'error' && (
-              <div className="mt-6 p-4 bg-red-50 rounded-lg flex items-start border border-red-200">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
-                <p className="text-sm text-red-800 font-medium">{message}</p>
+              <div>
+                {label('Description')}
+                <textarea
+                  required
+                  style={{ ...inp, minHeight: 120, resize: 'vertical' }}
+                  value={manualData.description}
+                  onChange={e => setManualData({ ...manualData, description: e.target.value })}
+                  placeholder="Describe the community need..."
+                />
               </div>
-            )}
-          </div>
+
+              <div style={{ display: 'flex', gap: '1.5rem' }}>
+                <button type="button" onClick={handleSaveDraft} disabled={isUploading} style={secondaryBtn({ flex: 1 })}
+                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
+                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}>
+                  Save Draft
+                </button>
+                <button type="submit" disabled={isUploading} style={primaryBtn({ flex: 1 })}
+                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
+                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}>
+                  {isUploading ? 'Submitting...' : 'Submit Survey'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Status messages */}
+          {status === 'success' && (
+            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: SUCC, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <CheckCircle2 style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
+              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
+            </div>
+          )}
+          {status === 'error' && (
+            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <AlertCircle style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
+              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

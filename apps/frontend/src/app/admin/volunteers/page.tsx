@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
 import { CheckCircle, XCircle, Clock, FileImage, User, X } from "lucide-react";
 import axios from "axios";
 import Sidebar from "@/components/Sidebar";
+
+const BG    = 'var(--bg)';
+const BLACK = 'var(--border-color)';
+const PUR   = 'var(--pur)';
+const YLW   = 'var(--ylw)';
+const WHITE = 'var(--shadow-color)';
+const FG    = 'var(--fg)';
+const CARD  = 'var(--card-bg)';
 
 export default function VolunteerRequestsPage() {
   const { data: session, status } = useSession();
@@ -16,13 +23,9 @@ export default function VolunteerRequestsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    } else if (status === "authenticated" && (session?.user as any)?.role !== 'NGO_ADMIN') {
-      router.push("/dashboard");
-    } else if (status === "authenticated") {
-      fetchPendingVolunteers();
-    }
+    if (status === "unauthenticated") router.push("/login");
+    else if (status === "authenticated" && (session?.user as any)?.role !== 'NGO_ADMIN') router.push("/dashboard");
+    else if (status === "authenticated") fetchPendingVolunteers();
   }, [status, session, router]);
 
   const fetchPendingVolunteers = async () => {
@@ -31,119 +34,102 @@ export default function VolunteerRequestsPage() {
         headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
       });
       setVolunteers(res.data);
-    } catch (err) {
-      console.error("Failed to fetch pending volunteers");
-    } finally {
-      setLoading(false);
-    }
+    } catch { console.error("Failed to fetch pending volunteers"); }
+    finally { setLoading(false); }
   };
 
   const handleVerify = async (volunteerId: string, actionStatus: 'approved' | 'rejected') => {
     try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/volunteers/${volunteerId}/verify`, {
-        status: actionStatus
-      }, {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/admin/volunteers/${volunteerId}/verify`, { status: actionStatus }, {
         headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
       });
       setVolunteers(volunteers.filter(v => v._id !== volunteerId));
-    } catch (err) {
-      alert(`Failed to ${actionStatus} volunteer`);
-    }
+    } catch { alert(`Failed to ${actionStatus} volunteer`); }
   };
 
+  const bruBtn = (onClick: () => void, label: string, icon: React.ReactNode, bg: string, color: string = '#000000') => (
+    <button
+      onClick={onClick}
+      style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: bg, color: color, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '12px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'transform 0.1s, box-shadow 0.1s' }}
+      onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
+      onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}
+    >
+      {icon}{label}
+    </button>
+  );
+
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-      </div>
-    );
+    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: BG }}>
+      <div style={{ width: 40, height: 40, border: `3px solid ${BLACK}`, borderTopColor: PUR, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    </div>;
   }
 
   return (
-    <div className="flex h-screen bg-background transition-colors duration-300">
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: BG }}>
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8 relative">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-foreground">Volunteer Requests</h1>
-          <p className="text-muted-foreground mt-2">Review and verify new volunteer applications.</p>
+      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem', backgroundColor: BG, position: 'relative' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
+          <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '2.2rem', textTransform: 'uppercase', letterSpacing: '-0.04em', color: FG, margin: 0 }}>
+            Volunteer Requests
+          </h1>
+          <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--muted-fg)', marginTop: 10 }}>
+            Review and verify new volunteer applications.
+          </p>
         </div>
 
-        <div className="grid gap-6">
+        {/* Cards */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {volunteers.length === 0 ? (
-            <div className="bg-card p-12 rounded-2xl border border-dashed border-border text-center">
-              <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-bold text-foreground">Queue is empty</h3>
-              <p className="text-muted-foreground">No pending volunteer requests to verify at this time.</p>
+            <div style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '5rem', textAlign: 'center' }}>
+              <Clock style={{ margin: '0 auto 1rem', width: 48, height: 48, color: 'var(--muted-fg)' }} />
+              <h3 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1.2rem', textTransform: 'uppercase', color: FG, margin: '0 0 8px' }}>Queue is empty</h3>
+              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>No pending volunteer requests at this time.</p>
             </div>
-          ) : (
-            volunteers.map((volunteer) => (
-              <div key={volunteer._id} className="bg-card dark:bg-zinc-900/50 dark:backdrop-blur-md rounded-2xl shadow-sm border border-border p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 transition-all duration-300">
-                <div className="space-y-3 flex-1">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded uppercase tracking-wider">
-                      {volunteer.specialization || 'General'}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-medium">Applied: {new Date(volunteer.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 mr-2 text-foreground" />
-                    <h3 className="text-xl font-bold text-foreground">{volunteer.name}</h3>
-                  </div>
-                  
-                  <p className="text-sm text-muted-foreground italic">"{volunteer.experienceBio || 'No bio provided'}"</p>
-                  
-                  <div className="flex items-center mt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => setSelectedProof(volunteer.idProofUrl)}
-                    >
-                      <FileImage className="w-4 h-4 mr-2" />
-                      View ID Proof
-                    </Button>
-                  </div>
+          ) : volunteers.map((volunteer) => (
+            <div key={volunteer._id} style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000000', border: `2px solid ${BLACK}`, boxShadow: `2px 2px 0 ${WHITE}`, padding: '3px 10px' }}>
+                    {volunteer.specialization || 'General'}
+                  </span>
+                  <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>
+                    Applied: {new Date(volunteer.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-                
-                <div className="flex space-x-3 w-full md:w-auto">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 md:flex-none border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    onClick={() => handleVerify(volunteer._id, 'rejected')}
-                  >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
-                  </Button>
-                  <Button 
-                    className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
-                    onClick={() => handleVerify(volunteer._id, 'approved')}
-                  >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Approve
-                  </Button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <User style={{ width: 18, height: 18, color: FG }} />
+                  <h3 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1.2rem', color: FG, margin: 0 }}>{volunteer.name}</h3>
                 </div>
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.78rem', color: FG, fontStyle: 'italic', marginBottom: 12 }}>
+                  &ldquo;{volunteer.experienceBio || 'No bio provided'}&rdquo;
+                </p>
+                {bruBtn(() => setSelectedProof(volunteer.idProofUrl), 'View ID Proof', <FileImage style={{ width: 14, height: 14 }} />, 'var(--bg)', FG)}
               </div>
-            ))
-          )}
+              <div style={{ display: 'flex', gap: 12 }}>
+                {bruBtn(() => handleVerify(volunteer._id, 'rejected'), 'Reject', <XCircle style={{ width: 16, height: 16 }} />, 'var(--bg)', FG)}
+                {bruBtn(() => handleVerify(volunteer._id, 'approved'), 'Approve', <CheckCircle style={{ width: 16, height: 16 }} />, PUR, '#FFFFFF')}
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Modal for ID Proof */}
+        {/* ID Proof Modal */}
         {selectedProof && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-card w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="p-4 border-b border-border flex justify-between items-center bg-muted/50">
-                <h3 className="text-lg font-bold">ID Proof</h3>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedProof(null)}>
-                  <X className="w-5 h-5" />
-                </Button>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', padding: '1rem' }}>
+            <div style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `8px 8px 0 ${WHITE}`, width: '100%', maxWidth: 800, maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem', borderBottom: `2.5px solid ${BLACK}`, backgroundColor: YLW }}>
+                <h3 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', color: '#000000', margin: 0 }}>ID Proof</h3>
+                <button onClick={() => setSelectedProof(null)} style={{ background: 'var(--bg)', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X style={{ width: 18, height: 18, color: FG }} />
+                </button>
               </div>
-              <div className="p-4 flex-1 overflow-auto flex justify-center items-center bg-black/5">
-                {selectedProof.toLowerCase().endsWith('.pdf') ? (
-                  <iframe src={selectedProof} className="w-full h-[60vh] rounded-lg" />
-                ) : (
-                  <img src={selectedProof} alt="ID Proof" className="max-w-full max-h-[60vh] object-contain rounded-lg" />
-                )}
+              <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: BG }}>
+                {selectedProof.toLowerCase().endsWith('.pdf')
+                   ? <iframe src={selectedProof} style={{ width: '100%', height: '60vh', border: `2px solid ${BLACK}` }} />
+                   : <img src={selectedProof} alt="ID Proof" style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain', border: `2px solid ${BLACK}` }} />
+                }
               </div>
             </div>
           </div>
