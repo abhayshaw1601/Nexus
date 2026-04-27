@@ -197,11 +197,11 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
       <div ref={mapRef} className="absolute inset-0 h-full w-full" />
       
       {/* Legend & Controls */}
-      <div className="absolute top-4 right-4 bg-zinc-950 p-4 rounded-lg shadow-xl border border-white/10 z-[1000] min-w-[160px] flex flex-col gap-4">
+      <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-xl border border-border z-[1000] min-w-[160px] flex flex-col gap-4 transition-colors duration-300">
         <div>
           <div className="flex justify-between mb-2 px-0.5">
             {[1, 2, 3, 4, 5].map(num => (
-              <span key={num} className="text-[9px] font-black text-white/50">{num}</span>
+              <span key={num} className="text-[9px] font-black text-muted-foreground">{num}</span>
             ))}
           </div>
           <div className="flex gap-1">
@@ -215,7 +215,7 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
 
         <button 
           onClick={centerOnUser}
-          className="w-full py-2 bg-white/10 hover:bg-white/20 text-[8px] font-black uppercase tracking-widest text-white rounded transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2 bg-muted hover:bg-muted/80 text-[8px] font-black uppercase tracking-widest text-foreground rounded transition-colors flex items-center justify-center gap-2 border border-border"
         >
           <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
           Center on Me
