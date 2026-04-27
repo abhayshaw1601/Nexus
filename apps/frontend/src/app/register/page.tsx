@@ -14,6 +14,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     role: "VOLUNTEER",
+    ngoJoinCode: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -85,13 +86,23 @@ export default function RegisterPage() {
               <select
                 className="flex h-12 w-full rounded-[4px] border-2 border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
                 value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value, ngoJoinCode: "" })}
               >
                 <option value="VOLUNTEER">Volunteer</option>
                 <option value="FIELD_WORKER">Field Worker</option>
                 <option value="NGO_ADMIN">NGO Admin</option>
               </select>
             </div>
+
+            {formData.role !== "NGO_ADMIN" && (
+              <Input
+                label="NGO Join Code"
+                required
+                value={formData.ngoJoinCode}
+                onChange={(e) => setFormData({ ...formData, ngoJoinCode: e.target.value })}
+                placeholder="E.G. A1B2C3"
+              />
+            )}
           </div>
 
           {error && <p className="text-[10px] font-bold text-destructive uppercase tracking-[0.2em]">{error}</p>}

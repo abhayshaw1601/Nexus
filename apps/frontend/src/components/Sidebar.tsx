@@ -68,8 +68,8 @@ export default function Sidebar() {
       {/* Nav */}
       <nav style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
         <Link href="/dashboard" style={linkStyle('/dashboard')}
-          onMouseEnter={e => handleHover(e, '/dashboard', true)}
-          onMouseLeave={e => handleHover(e, '/dashboard', false)}
+          onMouseEnter={(e: any) => handleHover(e, '/dashboard', true)}
+          onMouseLeave={(e: any) => handleHover(e, '/dashboard', false)}
         >
           <LayoutDashboard style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
           Dashboard
@@ -77,8 +77,8 @@ export default function Sidebar() {
 
         {(user.role === 'NGO_ADMIN' || user.role === 'FIELD_WORKER') && (
           <Link href="/surveys/new" style={linkStyle('/surveys/new')}
-            onMouseEnter={e => handleHover(e, '/surveys/new', true)}
-            onMouseLeave={e => handleHover(e, '/surveys/new', false)}
+            onMouseEnter={(e: any) => handleHover(e, '/surveys/new', true)}
+            onMouseLeave={(e: any) => handleHover(e, '/surveys/new', false)}
           >
             <PlusCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
             Add Data
@@ -88,27 +88,37 @@ export default function Sidebar() {
         {user.role === 'NGO_ADMIN' && (
           <>
             <Link href="/admin/verification" style={linkStyle('/admin/verification')}
-              onMouseEnter={e => handleHover(e, '/admin/verification', true)}
-              onMouseLeave={e => handleHover(e, '/admin/verification', false)}
+              onMouseEnter={(e: any) => handleHover(e, '/admin/verification', true)}
+              onMouseLeave={(e: any) => handleHover(e, '/admin/verification', false)}
             >
               <CheckCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Verification
             </Link>
             <Link href="/admin/volunteers" style={linkStyle('/admin/volunteers')}
-              onMouseEnter={e => handleHover(e, '/admin/volunteers', true)}
-              onMouseLeave={e => handleHover(e, '/admin/volunteers', false)}
+              onMouseEnter={(e: any) => handleHover(e, '/admin/volunteers', true)}
+              onMouseLeave={(e: any) => handleHover(e, '/admin/volunteers', false)}
             >
               <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Volunteer Requests
             </Link>
             <Link href="/admin" style={linkStyle('/admin')}
-              onMouseEnter={e => handleHover(e, '/admin', true)}
-              onMouseLeave={e => handleHover(e, '/admin', false)}
+              onMouseEnter={(e: any) => handleHover(e, '/admin', true)}
+              onMouseLeave={(e: any) => handleHover(e, '/admin', false)}
             >
               <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Admin Panel
             </Link>
           </>
+        )}
+
+        {user.ngoId && (
+          <Link href="/ngo/details" style={linkStyle('/ngo/details')}
+            onMouseEnter={(e: any) => handleHover(e, '/ngo/details', true)}
+            onMouseLeave={(e: any) => handleHover(e, '/ngo/details', false)}
+          >
+            <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+            Organization
+          </Link>
         )}
       </nav>
 

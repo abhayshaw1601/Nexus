@@ -8,13 +8,14 @@ import FormData from 'form-data';
 export const saveDraft = async (req: Request, res: Response) => {
   try {
     const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
+    const ngoId = (req as any).user?.ngoId;
     const { surveyId, description, category, urgency, location } = req.body;
 
     let survey;
     if (surveyId) {
       survey = await Survey.findOneAndUpdate(
         { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
-        { description, category, urgency, location },
+        { description, category, urgency, location, ngoId },
         { new: true }
       );
     }
@@ -22,6 +23,7 @@ export const saveDraft = async (req: Request, res: Response) => {
     if (!survey) {
       survey = new Survey({
         fieldWorkerId,
+        ngoId,
         description,
         category,
         urgency,
@@ -40,11 +42,12 @@ export const saveDraft = async (req: Request, res: Response) => {
 export const submitSurvey = async (req: Request, res: Response) => {
   try {
     const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
+    const ngoId = (req as any).user?.ngoId;
     const { surveyId } = req.body;
 
     const survey = await Survey.findOneAndUpdate(
       { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
-      { status: 'SUBMITTED' },
+      { status: 'SUBMITTED', ngoId },
       { new: true }
     );
 
@@ -60,7 +63,11 @@ export const submitSurvey = async (req: Request, res: Response) => {
 
 export const getPendingSurveys = async (req: Request, res: Response) => {
   try {
-    const surveys = await Survey.find({ status: 'SUBMITTED' }).populate('fieldWorkerId', 'name');
+    const ngoId = (req as any).user?.ngoId;
+    const query: any = { status: 'SUBMITTED' };
+    if (ngoId) query.ngoId = ngoId;
+
+    const surveys = await Survey.find(query).populate('fieldWorkerId', 'name');
     res.status(200).json(surveys);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching pending surveys', error });
@@ -70,6 +77,7 @@ export const getPendingSurveys = async (req: Request, res: Response) => {
 export const verifySurvey = async (req: Request, res: Response) => {
   try {
     const { surveyId, action } = req.body; // action: 'VERIFIED' or 'REJECTED'
+    const ngoId = (req as any).user?.ngoId;
 
     const survey = await Survey.findById(surveyId);
     if (!survey) {
@@ -87,6 +95,7 @@ export const verifySurvey = async (req: Request, res: Response) => {
         urgencyScore: survey.urgency || 3,
         description: survey.description || 'No description provided',
         location: survey.location || { type: 'Point', coordinates: [0, 0] },
+        ngoId: ngoId || survey.ngoId,
         status: 'OPEN'
       });
       await task.save();
@@ -105,10 +114,12 @@ export const uploadSurvey = async (req: Request, res: Response) => {
     }
 
     const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
+    const ngoId = (req as any).user?.ngoId;
     
     // Create survey record
     const survey = new Survey({
       fieldWorkerId,
+      ngoId,
       rawImageUrl: req.file.path,
       status: 'SUBMITTED', // Default to submitted for AI flow
     });

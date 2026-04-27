@@ -5,7 +5,11 @@ import { notifyNearbyVolunteers } from '../services/notificationService';
 
 export const getTasks = async (req: Request, res: Response) => {
   try {
-    const tasks = await Task.find({ status: { $ne: 'VERIFIED' } });
+    const ngoId = (req as any).user?.ngoId;
+    const query: any = { status: { $ne: 'VERIFIED' } };
+    if (ngoId) query.ngoId = ngoId;
+
+    const tasks = await Task.find(query);
 
     // Simple Privacy Geofencing: 
     // If not admin, add slight random offset to coordinates (approx 100m)
@@ -37,12 +41,18 @@ export const createTaskFromSurvey = async (req: Request, res: Response) => {
   try {
     const { surveyId, category, urgencyScore, description, coordinates } = req.body;
     const io = (req as any).io;
+    const ngoId = (req as any).user?.ngoId;
+
+    if (!ngoId) {
+      return res.status(403).json({ message: 'You must belong to an NGO to create tasks' });
+    }
 
     const task = new Task({
       sourceSurveyId: surveyId,
       category,
       urgencyScore,
       description,
+      ngoId,
       location: {
         type: 'Point',
         coordinates // [lng, lat]
@@ -51,6 +61,12 @@ export const createTaskFromSurvey = async (req: Request, res: Response) => {
     });
 
     await task.save();
+
+    // Update survey status if applicable
+    if (surveyId) {
+      const Survey = (await import('../models/Survey')).default;
+      await Survey.findByIdAndUpdate(surveyId, { status: 'VERIFIED' });
+    }
 
     // Trigger matching and notifications
     await findMatchingVolunteers(task, io);

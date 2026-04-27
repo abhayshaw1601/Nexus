@@ -11,6 +11,7 @@ export interface ISurvey extends Document {
     type: 'Point';
     coordinates: number[];
   };
+  ngoId?: mongoose.Types.ObjectId;
   dataStack?: any;
   aiExtractedData?: {
     rawText?: string;
@@ -36,6 +37,7 @@ const SurveySchema: Schema = new Schema({
     type: { type: String, enum: ['Point'], default: 'Point' },
     coordinates: { type: [Number] }
   },
+  ngoId: { type: Schema.Types.ObjectId, ref: 'NGO' },
   dataStack: { type: Schema.Types.Mixed, default: {} },
   aiExtractedData: {
     rawText: String,

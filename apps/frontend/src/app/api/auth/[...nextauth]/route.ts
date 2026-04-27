@@ -36,6 +36,7 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && session) {
         if (session.status) token.status = session.status;
         if (session.specialization) token.specialization = session.specialization;
+        if (session.ngoId) token.ngoId = session.ngoId;
       }
 
       if (user) {
@@ -44,6 +45,7 @@ export const authOptions: NextAuthOptions = {
         token.id = (user as any).id;
         token.status = (user as any).status;
         token.specialization = (user as any).specialization;
+        token.ngoId = (user as any).ngoId;
       }
       return token;
     },
@@ -54,6 +56,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
         (session.user as any).status = token.status;
         (session.user as any).specialization = token.specialization;
+        (session.user as any).ngoId = token.ngoId;
       }
       return session;
     },

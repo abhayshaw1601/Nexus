@@ -17,6 +17,7 @@ export interface IUser extends Document {
   idProofUrl?: string;
   experienceBio?: string;
   isOnDuty: boolean;
+  ngoId?: mongoose.Types.ObjectId;
   lastLocation?: {
     type: 'Point';
     coordinates: number[]; // [longitude, latitude]
@@ -27,6 +28,7 @@ const UserSchema: Schema = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String },
+  ngoId: { type: Schema.Types.ObjectId, ref: 'NGO' },
   role: { 
     type: String, 
     enum: ['SUPER_ADMIN', 'NGO_ADMIN', 'FIELD_WORKER', 'VOLUNTEER'], 

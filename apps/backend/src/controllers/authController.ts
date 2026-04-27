@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
+import NGO from '../models/NGO';
 import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import { z } from 'zod';
 
@@ -8,6 +9,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   role: z.enum(['NGO_ADMIN', 'FIELD_WORKER', 'VOLUNTEER']).optional(),
+  ngoJoinCode: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -18,17 +20,31 @@ const loginSchema = z.object({
 export const register = async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
+    const { ngoJoinCode, ...userData } = validatedData;
     
-    const existingUser = await User.findOne({ email: validatedData.email });
+    const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
+
+    let ngoId = undefined;
+    if (ngoJoinCode) {
+      if (userData.role === 'NGO_ADMIN') {
+        return res.status(400).json({ message: 'NGO Admins cannot use join codes. They must establish their own organization.' });
+      }
+      const ngo = await NGO.findOne({ joinCode: ngoJoinCode });
+      if (!ngo) {
+        return res.status(400).json({ message: 'Invalid NGO Join Code' });
+      }
+      ngoId = ngo._id;
+    }
     
-    const hashedPassword = await hashPassword(validatedData.password);
+    const hashedPassword = await hashPassword(userData.password);
     
     const user = new User({
-      ...validatedData,
+      ...userData,
       password: hashedPassword,
+      ngoId
     });
     
     await user.save();
@@ -44,6 +60,7 @@ export const register = async (req: Request, res: Response) => {
         role: user.role,
         status: user.status,
         specialization: user.specialization,
+        ngoId: user.ngoId
       },
     });
   } catch (error) {

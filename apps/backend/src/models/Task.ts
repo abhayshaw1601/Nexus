@@ -9,6 +9,7 @@ export interface ITask extends Document {
     type: 'Point';
     coordinates: number[]; // [longitude, latitude]
   };
+  ngoId: mongoose.Types.ObjectId;
   status: 'OPEN' | 'ASSIGNED' | 'COMPLETED' | 'VERIFIED';
   assignedVolunteerId?: mongoose.Types.ObjectId;
   proofData?: {
@@ -28,6 +29,7 @@ const TaskSchema: Schema = new Schema({
     type: { type: String, enum: ['Point'], default: 'Point' },
     coordinates: { type: [Number], required: true }
   },
+  ngoId: { type: Schema.Types.ObjectId, ref: 'NGO', required: true },
   status: { 
     type: String, 
     enum: ['OPEN', 'ASSIGNED', 'COMPLETED', 'VERIFIED'], 

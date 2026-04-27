@@ -19,6 +19,7 @@ const VolunteerMap = dynamic(() => import("@/components/VolunteerMap"), { ssr: f
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
+  const user = session?.user as any;
   const [tasks, setTasks] = useState<any[]>([]);
   const [centerLocation, setCenterLocation] = useState<[number, number] | null>(null);
   const [searchCoords, setSearchCoords] = useState("");
@@ -30,22 +31,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
-    else if (status === "authenticated") {
+    else if (status === "authenticated" && user) {
+      // Redirect Admin to onboarding if they haven't created an NGO yet
+      if (user.role === 'NGO_ADMIN' && !user.ngoId) {
+        router.push("/ngo/onboarding");
+        return;
+      }
+
       fetchTasks();
       const s = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
-        auth: { token: (session.user as any).accessToken }
+        auth: { token: (session?.user as any)?.accessToken }
       });
       setSocket(s);
       return () => { s.disconnect(); };
     }
-  }, [status, router, session]);
+  }, [status, router, session, user?.role, user?.ngoId]);
 
   const fetchTasks = async () => {
     try {
-      const isAdmin = (session?.user as any)?.role === 'NGO_ADMIN';
+      const isAdmin = user?.role === 'NGO_ADMIN';
       const endpoint = isAdmin ? '/tasks/all' : '/tasks';
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
-        headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
+        headers: { Authorization: `Bearer ${user?.accessToken}` }
       });
       setTasks(res.data);
     } catch { console.error("Failed to fetch tasks"); }
@@ -56,8 +63,6 @@ export default function DashboardPage() {
   const pendingSurveys = tasks.filter((t) => t.status === "OPEN").length;
   const activeTasks = tasks.filter((t) => t.status === "ASSIGNED").length;
   const impactScore = "15%";
-
-  const user = session!.user as any;
   const categories = ["ALL", ...Array.from(new Set(tasks.map((t) => t.category).filter(Boolean)))];
   const filtered = filterCategory === "ALL" ? tasks : tasks.filter((t) => t.category === filterCategory);
   const displayed = showAll ? filtered : filtered.slice(0, 5);
