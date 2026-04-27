@@ -42,7 +42,9 @@ export default function DashboardPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tasks/all`, {
+      const isAdmin = (session?.user as any)?.role === 'NGO_ADMIN';
+      const endpoint = isAdmin ? '/tasks/all' : '/tasks';
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
       });
       setTasks(res.data);
