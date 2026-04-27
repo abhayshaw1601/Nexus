@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, PlusCircle, Users, CheckCircle, Sun, Moon, Heart } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Users, CheckCircle, Sun, Heart, Menu, X, LogOut } from "lucide-react";
 import { useTheme } from "./Providers";
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 
 const BLACK = 'var(--border-color)';
 const WHITE = 'var(--shadow-color)';
@@ -20,8 +21,20 @@ export default function Sidebar() {
   const pathname = usePathname();
   const user = session?.user as any;
   const [mounted, setMounted] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Close sidebar when navigating
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
   if (!user) return null;
 
   const isActive = (path: string) => pathname === path;
@@ -36,7 +49,7 @@ export default function Sidebar() {
     boxShadow: isActive(path) ? `4px 4px 0px ${WHITE}` : 'none',
     transform: isActive(path) ? 'translate(-2px,-2px)' : 'none',
     textDecoration: 'none', transition: 'all 0.15s ease',
-    cursor: 'pointer',
+    cursor: 'pointer', minHeight: 48,
   });
 
   const handleHover = (e: React.MouseEvent<HTMLElement>, path: string, entering: boolean) => {
@@ -55,21 +68,47 @@ export default function Sidebar() {
     }
   };
 
-  return (
-    <aside style={{ width: 256, backgroundColor: SIDEBAR_BG, borderRight: `2.5px solid ${BLACK}`, display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
-      {/* Logo */}
-      <div style={{ display: 'flex', height: 80, alignItems: 'center', padding: '0 1.5rem', borderBottom: `2.5px solid ${BLACK}`, backgroundColor: HEADER_BG, flexShrink: 0 }}>
-        <Heart style={{ width: 18, height: 18, color: PUR, strokeWidth: 1.5, marginRight: 10 }} />
-        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: FG }}>
-          NexusImpact
-        </span>
+  const sidebarContent = (
+    <aside style={{
+      width: '100%',
+      height: '100%',
+      backgroundColor: SIDEBAR_BG,
+      borderRight: `2.5px solid ${BLACK}`,
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* Logo / Header in Drawer */}
+      <div style={{ display: 'flex', height: 64, alignItems: 'center', padding: '0 16px', borderBottom: `2.5px solid ${BLACK}`, backgroundColor: HEADER_BG, flexShrink: 0, justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Aligned Close button for mobile */}
+          {isMobile ? (
+            <button
+              onClick={() => setMobileOpen(false)}
+              style={{ background: 'transparent', border: 'none', width: 44, height: 44, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: FG, marginLeft: -14 }}
+            >
+              <X style={{ width: 24, height: 24 }} />
+            </button>
+          ) : (
+            <>
+              <Heart style={{ width: 18, height: 18, color: PUR, strokeWidth: 1.5, marginRight: 10 }} />
+              <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: FG }}>
+                NexusImpact
+              </span>
+            </>
+          )}
+        </div>
+        {isMobile && (
+          <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: FG }}>
+            Menu
+          </span>
+        )}
       </div>
 
       {/* Nav */}
       <nav style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
         <Link href="/dashboard" style={linkStyle('/dashboard')}
-          onMouseEnter={e => handleHover(e, '/dashboard', true)}
-          onMouseLeave={e => handleHover(e, '/dashboard', false)}
+          onMouseEnter={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/dashboard', true)}
+          onMouseLeave={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/dashboard', false)}
         >
           <LayoutDashboard style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
           Dashboard
@@ -77,8 +116,8 @@ export default function Sidebar() {
 
         {(user.role === 'NGO_ADMIN' || user.role === 'FIELD_WORKER') && (
           <Link href="/surveys/new" style={linkStyle('/surveys/new')}
-            onMouseEnter={e => handleHover(e, '/surveys/new', true)}
-            onMouseLeave={e => handleHover(e, '/surveys/new', false)}
+            onMouseEnter={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/surveys/new', true)}
+            onMouseLeave={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/surveys/new', false)}
           >
             <PlusCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
             Add Data
@@ -88,22 +127,22 @@ export default function Sidebar() {
         {user.role === 'NGO_ADMIN' && (
           <>
             <Link href="/admin/verification" style={linkStyle('/admin/verification')}
-              onMouseEnter={e => handleHover(e, '/admin/verification', true)}
-              onMouseLeave={e => handleHover(e, '/admin/verification', false)}
+              onMouseEnter={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin/verification', true)}
+              onMouseLeave={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin/verification', false)}
             >
               <CheckCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Verification
             </Link>
             <Link href="/admin/volunteers" style={linkStyle('/admin/volunteers')}
-              onMouseEnter={e => handleHover(e, '/admin/volunteers', true)}
-              onMouseLeave={e => handleHover(e, '/admin/volunteers', false)}
+              onMouseEnter={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin/volunteers', true)}
+              onMouseLeave={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin/volunteers', false)}
             >
               <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Volunteer Requests
             </Link>
             <Link href="/admin" style={linkStyle('/admin')}
-              onMouseEnter={e => handleHover(e, '/admin', true)}
-              onMouseLeave={e => handleHover(e, '/admin', false)}
+              onMouseEnter={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin', true)}
+              onMouseLeave={(e: React.MouseEvent<HTMLElement>) => handleHover(e, '/admin', false)}
             >
               <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
               Admin Panel
@@ -112,12 +151,12 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Theme toggle */}
+      {/* Theme toggle — always accessible at bottom */}
       <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}` }}>
         {mounted && (
           <button
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '10px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: FG, backgroundColor: 'transparent', border: `2px solid transparent`, cursor: 'pointer', transition: 'all 0.15s ease' }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '10px 16px', minHeight: 48, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: FG, backgroundColor: 'transparent', border: `2px solid transparent`, cursor: 'pointer', transition: 'all 0.15s ease' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0, 137, 123, 0.1)'; (e.currentTarget as HTMLElement).style.border = `2px solid ${BLACK}`; (e.currentTarget as HTMLElement).style.boxShadow = `3px 3px 0 ${WHITE}`; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.border = `2px solid transparent`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
@@ -129,5 +168,97 @@ export default function Sidebar() {
         )}
       </div>
     </aside>
+  );
+
+  return (
+    <>
+      {/* Fixed Mobile Header Bar */}
+      {isMobile && (
+        <header style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 64,
+          backgroundColor: HEADER_BG,
+          borderBottom: `2.5px solid ${BLACK}`,
+          display: 'grid',
+          gridTemplateColumns: '48px 1fr 110px',
+          alignItems: 'center',
+          padding: '0 16px',
+          zIndex: 60,
+        }}>
+          <button
+            onClick={() => setMobileOpen(true)}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 44,
+              height: 44,
+            }}
+            aria-label="Open navigation"
+          >
+            <Menu style={{ width: 24, height: 24, color: FG }} />
+          </button>
+
+          <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', justifyContent: 'center' }}>
+            <Heart style={{ width: 18, height: 18, color: PUR, marginRight: 8, flexShrink: 0 }} />
+            <span style={{ 
+              fontFamily: "'Plus Jakarta Sans',sans-serif", 
+              fontWeight: 900, 
+              fontSize: 'clamp(0.9rem, 4vw, 1.25rem)', 
+              letterSpacing: '0.1em', 
+              textTransform: 'uppercase', 
+              color: FG,
+              whiteSpace: 'nowrap',
+            }}>
+              NexusImpact
+            </span>
+          </div>
+
+          <button
+            onClick={() => signOut()}
+            style={{
+              background: 'transparent',
+              border: `2.5px solid ${BLACK}`,
+              padding: '4px 12px',
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontWeight: 900,
+              fontSize: '0.6rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              color: FG,
+              boxShadow: `3px 3px 0px 0px #000`,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              justifySelf: 'end'
+            }}
+          >
+            <LogOut style={{ width: 12, height: 12 }} />
+            Logout
+          </button>
+        </header>
+      )}
+
+      {/* Backdrop overlay — only visible on mobile when open */}
+      {isMobile && mobileOpen && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => setMobileOpen(false)}
+          style={{ display: 'block' }}
+        />
+      )}
+
+      {/* Sidebar wrapper — sticky on desktop, fixed slide-in on mobile */}
+      <div className={`sidebar-wrapper${mobileOpen ? ' open' : ''}`}>
+        {sidebarContent}
+      </div>
+    </>
   );
 }

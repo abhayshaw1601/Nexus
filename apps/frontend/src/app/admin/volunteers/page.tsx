@@ -65,16 +65,16 @@ export default function VolunteerRequestsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: BG }}>
+    <div className="page-layout">
       <Sidebar />
-      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem', backgroundColor: BG, position: 'relative' }}>
+      <main className="neo-main" style={{ position: 'relative' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '2.5rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
-          <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '2.2rem', textTransform: 'uppercase', letterSpacing: '-0.04em', color: FG, margin: 0 }}>
+          <h1 className="page-title">
             Volunteer Requests
           </h1>
-          <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--muted-fg)', marginTop: 10 }}>
+          <p className="page-subtitle">
             Review and verify new volunteer applications.
           </p>
         </div>
@@ -82,13 +82,13 @@ export default function VolunteerRequestsPage() {
         {/* Cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {volunteers.length === 0 ? (
-            <div style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '5rem', textAlign: 'center' }}>
+            <div style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '5rem', textAlign: 'center', width: 'calc(100% - 6px)', margin: '0 auto', boxSizing: 'border-box' }}>
               <Clock style={{ margin: '0 auto 1rem', width: 48, height: 48, color: 'var(--muted-fg)' }} />
               <h3 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1.2rem', textTransform: 'uppercase', color: FG, margin: '0 0 8px' }}>Queue is empty</h3>
               <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>No pending volunteer requests at this time.</p>
             </div>
           ) : volunteers.map((volunteer) => (
-            <div key={volunteer._id} style={{ backgroundColor: CARD, border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '2rem' }}>
+            <div key={volunteer._id} className="neo-card card-row" style={{ padding: '1.5rem 2rem' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                   <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.6rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000000', border: `2px solid ${BLACK}`, boxShadow: `2px 2px 0 ${WHITE}`, padding: '3px 10px' }}>
@@ -107,7 +107,7 @@ export default function VolunteerRequestsPage() {
                 </p>
                 {bruBtn(() => setSelectedProof(volunteer.idProofUrl), 'View ID Proof', <FileImage style={{ width: 14, height: 14 }} />, 'var(--bg)', FG)}
               </div>
-              <div style={{ display: 'flex', gap: 12 }}>
+              <div className="card-actions">
                 {bruBtn(() => handleVerify(volunteer._id, 'rejected'), 'Reject', <XCircle style={{ width: 16, height: 16 }} />, 'var(--bg)', FG)}
                 {bruBtn(() => handleVerify(volunteer._id, 'approved'), 'Approve', <CheckCircle style={{ width: 16, height: 16 }} />, PUR, '#FFFFFF')}
               </div>

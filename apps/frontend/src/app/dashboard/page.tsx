@@ -89,7 +89,7 @@ export default function DashboardPage() {
     tableWrap:  { margin:'0 2rem 2rem', backgroundColor:'var(--card-bg)', border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, overflow:'hidden' },
     tableHead:  { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.5rem', borderBottom:`2.5px solid var(--border-color)` },
     tableTitle: { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'1.1rem', color:'var(--fg)', margin:0 },
-    countBadge: { fontFamily:"'Space Mono',monospace", fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase' as const, backgroundColor:PUR, color:'#FFFFFF', border:`2px solid ${BLACK}`, boxShadow:`2px 2px 0 ${WHITE}`, padding:'3px 10px' },
+    countBadge: { fontFamily:"'Space Mono',monospace", fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase' as const, backgroundColor:PUR, color:'#FFFFFF', border:`2px solid ${BLACK}`, boxShadow:`3px 3px 0px 0px #000`, padding:'4px 12px', minWidth: 'fit-content', whiteSpace: 'nowrap' },
     th:         { padding:'12px 24px', fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.65rem', textTransform:'uppercase' as const, letterSpacing:'0.1em', color:'#000', backgroundColor:YLW, borderRight:`2px solid ${BLACK}`, borderBottom:`2.5px solid ${BLACK}` },
     td:         { padding:'12px 24px', fontFamily:"'Space Mono',monospace", fontSize:'0.8rem', color:'var(--fg)', borderRight:'1px solid rgba(128,128,128,0.2)', borderBottom:'1px solid rgba(128,128,128,0.2)' },
     tdB:        { padding:'12px 24px', borderRight:'1px solid rgba(128,128,128,0.2)', borderBottom:'1px solid rgba(128,128,128,0.2)' },
@@ -116,10 +116,13 @@ export default function DashboardPage() {
         <Sidebar />
         <NotificationModal socket={socket} volunteerLocation={centerLocation} />
 
-        <main style={S.main}>
+      <main className="neo-main" style={{ flex:1, overflowY:'auto' as const, backgroundColor:'var(--bg)' }}>
 
-          {/* ── HEADER ── */}
-          <header style={S.header}>
+          {/* ── HEADER (Desktop Only) ── */}
+          <header className="desktop-only" style={{ ...S.header, display: 'flex' }}>
+            <style jsx>{`
+              @media (max-width: 767px) { .desktop-only { display: none !important; } }
+            `}</style>
             <h1 style={S.h1}>Overview [ {user.name} ]</h1>
             <div style={{ display:'flex', alignItems:'center', gap:'1.5rem' }}>
               {user.role === 'VOLUNTEER' && (
@@ -143,9 +146,34 @@ export default function DashboardPage() {
             </div>
           </header>
 
+          {/* ── MOBILE TITLE ── */}
+          <div className="mobile-only" style={{ display: 'none', marginBottom: '24px', padding: '0 16px' }}>
+            <style jsx>{`
+              @media (max-width: 767px) { .mobile-only { display: block !important; } }
+            `}</style>
+            <h1 style={{ ...S.h1, fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Overview</h1>
+            <p style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted-fg)', marginTop: 4 }}>
+              Logged in as {user.name}
+            </p>
+          </div>
+
           {/* ── METRIC CARDS ── */}
           {user.role !== 'VOLUNTEER' && (
-            <div style={S.statsGrid}>
+            <div className="stats-grid" style={S.statsGrid}>
+              <style jsx>{`
+                @media (max-width: 767px) { 
+                  .stats-grid { 
+                    display: flex !important; 
+                    flex-direction: column !important; 
+                    padding: 0 16px !important;
+                    gap: 16px !important;
+                  } 
+                  .stats-grid > div {
+                    width: 100% !important;
+                    padding: 1.5rem !important;
+                  }
+                }
+              `}</style>
               <div style={S.cardPurple}>
                 <p style={S.cardLabelWhite}>Pending Surveys</p>
                 <p style={S.cardValueWhite}>{pendingSurveys}</p>
@@ -162,16 +190,33 @@ export default function DashboardPage() {
           )}
 
           {/* ── GEOSPATIAL ── */}
-          <section style={S.mapSection}>
-            <div style={S.mapHeader}>
+          <section className="map-section" style={S.mapSection}>
+            <style jsx>{`
+              @media (max-width: 767px) {
+                .map-section {
+                  padding: 16px !important;
+                  height: auto !important;
+                }
+                .map-container {
+                  aspect-ratio: 1 / 1 !important;
+                  height: auto !important;
+                }
+                .map-header-inner {
+                  flex-direction: column !important;
+                  align-items: flex-start !important;
+                  gap: 12px !important;
+                }
+              }
+            `}</style>
+            <div className="map-header-inner" style={S.mapHeader}>
               <div>
                 <p style={{ ...S.cardLabel, color:'var(--muted-fg)', marginBottom:4 }}>Global Intelligence</p>
-                <h2 style={S.mapTitle}>Geospatial [Need_Heatmap]</h2>
+                <h2 style={S.mapTitle}>Geospatial [Heatmap]</h2>
               </div>
-              <div style={{ display:'flex', gap:12 }}>
+              <div style={{ display:'flex', gap:12, width: '100%', maxWidth: '400px' }}>
                 <input 
-                  placeholder="Lat, Lng (e.g. 12.97, 77.59)" 
-                  style={S.searchInput}
+                  placeholder="Lat, Lng" 
+                  style={{ ...S.searchInput, flex: 1 }}
                   value={searchCoords}
                   onChange={(e) => setSearchCoords(e.target.value)}
                 />
@@ -179,12 +224,9 @@ export default function DashboardPage() {
                   const [lat, lng] = searchCoords.split(",").map(Number);
                   if (lat && lng) setCenterLocation([lat, lng]);
                 }}>Search</Button>
-                <Button size="sm" variant="outline" onClick={() => setCenterLocation(null)}>
-                  <MapPin style={{ width:14, height:14 }} />
-                </Button>
               </div>
             </div>
-            <div style={{ flex:1, border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, position:'relative', overflow:'hidden' }}>
+            <div className="map-container" style={{ flex:1, border:`2.5px solid ${BLACK}`, boxShadow:`4px 4px 0px ${WHITE}`, position:'relative', overflow:'hidden', minHeight: '300px' }}>
               {user.role === 'VOLUNTEER' ? (
                 <VolunteerMap center={centerLocation} />
               ) : (
@@ -194,13 +236,34 @@ export default function DashboardPage() {
           </section>
 
           {/* ── TASKS TABLE ── */}
-          <section style={S.tableWrap}>
-            <div style={S.tableHead}>
-              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <h2 style={S.tableTitle}>Task Queue</h2>
+          <section className="table-wrap-container" style={S.tableWrap}>
+            <style jsx>{`
+              @media (max-width: 767px) {
+                .table-wrap-container {
+                  margin: 16px !important;
+                  box-shadow: 4px 4px 0px ${WHITE} !important;
+                }
+                .table-header-inner {
+                  padding: 1rem !important;
+                }
+                @media (max-width: 600px) {
+                  .table-header-inner {
+                    flex-direction: column !important;
+                    align-items: flex-start !important;
+                    gap: 1rem !important;
+                  }
+                  .table-controls-row {
+                    width: 100% !important;
+                    justify-content: flex-start !important;
+                    gap: 12px !important;
+                  }
+                }
+              }
+            `}</style>
+            <div className="table-header-inner" style={S.tableHead}>
+              <h2 style={S.tableTitle}>Task Queue</h2>
+              <div className="table-controls-row" style={{ display:'flex', gap:12, alignItems:'center' }}>
                 <span style={S.countBadge}>{filtered.length} Records</span>
-              </div>
-              <div style={{ display:'flex', gap:12, alignItems:'center' }}>
                 <div style={{ position:'relative' }}>
                   <select 
                     style={S.select}
@@ -214,34 +277,61 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-            <div style={{ overflowX:'auto' }}>
-              <table style={{ width:'100%', borderCollapse:'collapse' }}>
-                <thead>
-                  <tr>
-                    <th style={S.th}>Description</th>
-                    <th style={S.th}>Category</th>
-                    <th style={S.th}>Urgency</th>
-                    <th style={S.th}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayed.map((task) => (
-                    <tr key={task._id} style={{ borderBottom:`1px solid rgba(128,128,128,0.15)` }}>
-                      <td style={S.td}>{task.description}</td>
-                      <td style={S.td}>
-                        <span style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase' }}>{task.category}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={urgencyStyle(task.urgencyScore)}>Priority {task.urgencyScore}</span>
-                      </td>
-                      <td style={S.td}>
-                        <span style={statusStyle(task.status)}>{task.status}</span>
-                      </td>
+
+            {/* Desktop Table */}
+            <div className="desktop-only" style={{ display: 'block' }}>
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={S.th}>Description</th>
+                      <th style={S.th}>Category</th>
+                      <th style={S.th}>Urgency</th>
+                      <th style={S.th}>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {displayed.map((task) => (
+                      <tr key={task._id} style={{ borderBottom:`1px solid rgba(128,128,128,0.15)` }}>
+                        <td style={S.td}>{task.description}</td>
+                        <td style={S.td}>
+                          <span style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase' }}>{task.category}</span>
+                        </td>
+                        <td style={S.td}>
+                          <span style={urgencyStyle(task.urgencyScore)}>Priority {task.urgencyScore}</span>
+                        </td>
+                        <td style={S.td}>
+                          <span style={statusStyle(task.status)}>{task.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+
+            {/* Mobile Card Stack */}
+            <div className="mobile-only" style={{ display: 'none' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '1rem' }}>
+                {displayed.map((task) => (
+                  <div key={task._id} style={{ border: `2px solid ${BLACK}`, padding: '1rem', backgroundColor: 'var(--card-bg)', boxShadow: `3px 3px 0px 0px #000`, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <span className="neo-badge" style={{ color: PUR, marginBottom: 12, border: `2.5px solid ${BLACK}` }}>{task.category}</span>
+                      <div className="neo-scroll-content" style={{ maxHeight: '100px', paddingRight: '4px' }}>
+                        <h3 style={{ margin: '4px 0', fontSize: '0.9rem', fontWeight: 900 }}>{task.description}</h3>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 'auto', paddingTop: 8 }}>
+                      <span className="neo-badge" style={{ backgroundColor: task.urgencyScore >= 4 ? 'var(--accent-critical)' : 'var(--ylw)', color: task.urgencyScore >= 4 ? '#FFFFFF' : '#000000', boxShadow: '2px 2px 0 #000' }}>
+                        Priority {task.urgencyScore}
+                      </span>
+                      <span style={statusStyle(task.status)}>{task.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {!showAll && filtered.length > 5 && (
               <div style={{ padding:'12px 24px', borderTop:`2.5px solid ${BLACK}`, textAlign:'center', backgroundColor:SIDEBAR_BG }}>
                 <button onClick={() => setShowAll(true)} style={{ fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.1em', background:'none', border:'none', cursor:'pointer', color:PUR }}>

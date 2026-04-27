@@ -21,6 +21,7 @@
   --accent-critical: #FF5C5C; /* Volunteer Coral */
   --accent-success: #2E7D32;  /* Civic Green */
   --border-color: #000000;
+  --neo-shadow: 4px 4px 0px 0px var(--shadow-color);
 }
 
 .dark {
@@ -87,7 +88,7 @@
 .neo-card {
   background-color: var(--card-bg);
   border: 2.5px solid var(--border-color);
-  box-shadow: 6px 6px 0px var(--shadow-color);
+  box-shadow: var(--neo-shadow);
 }
 
 .neo-btn {
@@ -100,7 +101,7 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   border: 2.5px solid var(--border-color);
-  box-shadow: 4px 4px 0px var(--shadow-color);
+  box-shadow: var(--neo-shadow);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   cursor: pointer;
   padding: 0.5rem 1rem;
@@ -108,7 +109,7 @@
 
 .neo-btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--shadow-color);
+  box-shadow: 6px 6px 0px var(--shadow-color); /* Hover state keeps slight depth */
 }
 
 .neo-btn:active {
@@ -134,7 +135,50 @@
   letter-spacing: 0.08em;
   padding: 0.2rem 0.6rem;
   border: 2px solid var(--border-color);
-  box-shadow: 2px 2px 0px var(--shadow-color);
+  box-shadow: var(--neo-shadow);
+  min-width: fit-content;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Minimalist Scrollbar ── */
+.neo-scroll-content {
+  overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s ease;
+}
+
+.neo-scroll-content:hover {
+  scrollbar-color: var(--border-color) transparent;
+}
+
+/* Chrome/Safari/Edge */
+.neo-scroll-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.neo-scroll-content::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.neo-scroll-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.neo-scroll-content::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 10px;
+  transition: background-color 0.2s ease;
+}
+
+.neo-scroll-content:hover::-webkit-scrollbar-thumb {
+  background-color: #000;
 }
 
 .neo-sidebar {
@@ -146,7 +190,7 @@
   background-color: var(--pur) !important;
   color: #FFFFFF !important;
   border: 2.5px solid var(--border-color) !important;
-  box-shadow: 4px 4px 0px var(--shadow-color) !important;
+  box-shadow: var(--neo-shadow) !important;
   transform: translate(-2px, -2px);
 }
 
@@ -161,4 +205,234 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* =============================================
+   RESPONSIVE DESIGN SYSTEM
+   Breakpoints: mobile < 768px | tablet 768–1024px | desktop > 1024px
+   ============================================= */
+
+/* ── Page-level layout ── */
+.page-layout {
+  display: flex;
+  height: 100vh;
+  background-color: var(--bg);
+}
+
+.neo-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background-color: var(--bg);
+}
+
+/* ── Page title: fluid typography ── */
+.page-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  color: var(--fg);
+  margin: 0;
+}
+
+.page-subtitle {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  color: var(--muted-fg);
+  margin-top: 10px;
+}
+
+/* ── Full-stretch container (shadow-offset compensated) ── */
+.neo-card-full {
+  background-color: var(--card-bg);
+  border: 2.5px solid var(--border-color);
+  box-shadow: var(--neo-shadow);
+  width: calc(100% - 4px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 3rem;
+}
+
+.neo-card-full-deep {
+  background-color: var(--card-bg);
+  border: 2.5px solid var(--border-color);
+  box-shadow: 8px 8px 0px var(--shadow-color);
+  width: calc(100% - 8px);
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+}
+
+/* ── Two-column form grid ── */
+.form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* ── Card row (record cards with text + action buttons) ── */
+.card-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Action button group (approve/reject, etc.) ── */
+.card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Touch targets ── */
+.neo-btn {
+  min-height: 48px;
+}
+
+/* ── Sidebar wrapper ── */
+.sidebar-wrapper {
+  width: 256px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+/* ── Hamburger button (deprecated, handled in Sidebar.tsx) ── */
+.hamburger-btn {
+  display: none;
+}
+
+/* ── Mobile sidebar overlay backdrop ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* ── Tab switcher ── */
+.tab-switcher {
+  display: flex;
+  margin-bottom: 2rem;
+  gap: 0;
+}
+
+/* =============================================
+   TABLET: 768px – 1024px
+   ============================================= */
+@media (max-width: 1024px) {
+  .neo-card-full,
+  .neo-card-full-deep {
+    padding: 1.5rem;
+  }
+
+  .sidebar-wrapper {
+    width: 200px;
+  }
+}
+
+/* =============================================
+   MOBILE: < 768px
+   ============================================= */
+@media (max-width: 767px) {
+  /* Layout: hide sidebar, add top padding for hamburger */
+  .page-layout {
+    flex-direction: column;
+  }
+
+  .sidebar-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 256px;
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar-wrapper.open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .neo-main {
+    padding: 16px;
+    padding-top: 88px; /* 64px header + 24px spacing */
+  }
+
+  /* Containers: 16px margins (calc(100% - 32px)), scale-down shadows to 4px 4px */
+  .neo-card-full {
+    width: calc(100% - 32px);
+    margin: 0 auto;
+    padding: 1.25rem;
+    box-shadow: 4px 4px 0px var(--shadow-color);
+  }
+
+  .neo-card-full-deep {
+    width: calc(100% - 32px);
+    margin: 0 auto;
+    padding: 1.25rem;
+    box-shadow: 4px 4px 0px var(--shadow-color);
+    gap: 1.5rem;
+  }
+
+  /* Form grids stack to single column */
+  .form-grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  /* Card rows stack vertically */
+  .card-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Action buttons go full-width in a row on mobile */
+  .card-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .card-actions button {
+    flex: 1;
+  }
+
+  /* Tab switcher wraps */
+  .tab-switcher {
+    flex-direction: column;
+  }
+
+  /* Touch target enforcement */
+  button, a, input, select, textarea {
+    min-height: 48px;
+  }
+
+  .neo-badge {
+    padding: 0.3rem 0.8rem;
+    box-shadow: 3px 3px 0px 0px #000;
+  }
 }

@@ -21,14 +21,15 @@ const CARD  = 'var(--card-bg)';
 
 const inp = {
   width: '100%', padding: '10px 14px', backgroundColor: 'var(--bg)', border: `2.5px solid ${BLACK}`,
-  boxShadow: `4px 4px 0 ${WHITE}`, fontFamily: "'Space Mono',monospace", fontSize: '0.85rem',
+  boxShadow: 'var(--neo-shadow)', fontFamily: "'Space Mono',monospace", fontSize: '0.85rem',
   color: FG, outline: 'none', boxSizing: 'border-box' as const,
 };
+const SHADOW = 'var(--neo-shadow)';
 
 const primaryBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
   fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.85rem',
   textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF',
-  border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '14px 24px',
+  border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '14px 24px',
   cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s', display: 'inline-flex',
   alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', ...extra,
 });
@@ -124,34 +125,34 @@ export default function NewSurveyPage() {
   );
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: BG }}>
+    <div className="page-layout">
       <Sidebar />
-      <main style={{ flex: 1, overflowY: 'auto', padding: '2rem', backgroundColor: BG }}>
+      <main className="neo-main">
 
         {/* Page Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
           <div>
-            <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '2.2rem', textTransform: 'uppercase', letterSpacing: '-0.04em', color: FG, margin: 0 }}>
+            <h1 className="page-title">
               Add Community Data
             </h1>
-            <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: 'var(--muted-fg)', marginTop: 10 }}>
+            <p className="page-subtitle">
               Upload a paper survey for AI processing or enter data manually.
             </p>
           </div>
           <Link href="/dashboard">
-            <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               ← Back to Dashboard
             </button>
           </Link>
         </div>
 
         {/* Tab Switcher */}
-        <div style={{ display: 'flex', marginBottom: '2rem', gap: 0 }}>
+        <div className="tab-switcher">
           {(['ai', 'manual'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: activeTab === tab ? `4px 4px 0 ${WHITE}` : `6px 6px 0 ${WHITE}`, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
+              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: activeTab === tab ? 'var(--neo-shadow)' : SHADOW, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
             >
               {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
             </button>
@@ -159,7 +160,7 @@ export default function NewSurveyPage() {
         </div>
 
         {/* Main form card */}
-        <div style={{ backgroundColor: 'var(--card-bg)', border: `2.5px solid ${BLACK}`, boxShadow: `6px 6px 0 ${WHITE}`, padding: '2.5rem', maxWidth: 800 }}>
+        <div className="neo-card-full">
 
           {/* ─ AI Tab ─ */}
           {activeTab === 'ai' && (
@@ -184,9 +185,9 @@ export default function NewSurveyPage() {
               <button
                 type="submit"
                 disabled={!file || isUploading}
-                style={{ ...primaryBtn(), opacity: (!file || isUploading) ? 0.5 : 1 }}
-                onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
-                onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}
+                style={{ ...primaryBtn({ maxWidth: 400, margin: '0 auto' }), opacity: (!file || isUploading) ? 0.5 : 1 }}
+                onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
+                onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}
               >
                 {isUploading ? 'Processing...' : 'Process with AI'}
               </button>
@@ -196,7 +197,7 @@ export default function NewSurveyPage() {
           {/* ─ Manual Tab ─ */}
           {activeTab === 'manual' && (
             <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+              <div className="form-grid-2col">
                 <div>
                   {label('Category')}
                   <select
@@ -219,13 +220,13 @@ export default function NewSurveyPage() {
                   {label('Coordinates')}
                   <button type="button" onClick={handleGetCurrentLocation}
                     style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
-                    onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `3px 3px 0 ${WHITE}`; }}
+                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
+                    onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0 #000'; }}
                   >
                     <MapPin style={{ width: 12, height: 12 }} /> Use My Location
                   </button>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div className="form-grid-2col">
                   <div>
                     {label('Latitude')}
                     <input type="text" placeholder="e.g. 12.97" required style={inp} value={manualData.lat}
@@ -252,13 +253,13 @@ export default function NewSurveyPage() {
 
               <div style={{ display: 'flex', gap: '1.5rem' }}>
                 <button type="button" onClick={handleSaveDraft} disabled={isUploading} style={secondaryBtn({ flex: 1 })}
-                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
-                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}>
+                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
+                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}>
                   Save Draft
                 </button>
                 <button type="submit" disabled={isUploading} style={primaryBtn({ flex: 1 })}
-                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(4px,4px)'; (e.currentTarget as HTMLElement).style.boxShadow = `0px 0px 0 ${WHITE}`; }}
-                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = `6px 6px 0 ${WHITE}`; }}>
+                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
+                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}>
                   {isUploading ? 'Submitting...' : 'Submit Survey'}
                 </button>
               </div>
@@ -273,7 +274,7 @@ export default function NewSurveyPage() {
             </div>
           )}
           {status === 'error' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, display: 'flex', alignItems: 'center', gap: 12 }}>
               <AlertCircle style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
               <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
             </div>
