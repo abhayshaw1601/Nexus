@@ -4,75 +4,127 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LayoutDashboard, PlusCircle, Users, CheckCircle, Sun, Moon, Heart } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "./Providers";
 import { useState, useEffect } from "react";
+
+const BLACK = 'var(--border-color)';
+const WHITE = 'var(--shadow-color)';
+const PUR   = 'var(--pur)';
+const FG    = 'var(--fg)';
+const SIDEBAR_BG = 'var(--sidebar-bg)';
+const HEADER_BG = 'var(--header-bg)';
 
 export default function Sidebar() {
   const { data: session } = useSession();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const pathname = usePathname();
   const user = session?.user as any;
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
+  useEffect(() => { setMounted(true); }, []);
   if (!user) return null;
 
-  const isActive = (path: string) => {
-    return pathname === path 
-      ? "bg-primary text-primary-foreground font-black" 
-      : "text-muted-foreground hover:bg-muted hover:text-foreground";
+  const isActive = (path: string) => pathname === path;
+
+  const linkStyle = (path: string): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', padding: '12px 16px',
+    fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem',
+    letterSpacing: '0.15em', textTransform: 'uppercase',
+    color: isActive(path) ? '#FFFFFF' : FG,
+    backgroundColor: isActive(path) ? PUR : 'transparent',
+    border: `2px solid ${isActive(path) ? BLACK : 'transparent'}`,
+    boxShadow: isActive(path) ? `4px 4px 0px ${WHITE}` : 'none',
+    transform: isActive(path) ? 'translate(-2px,-2px)' : 'none',
+    textDecoration: 'none', transition: 'all 0.15s ease',
+    cursor: 'pointer',
+  });
+
+  const handleHover = (e: React.MouseEvent<HTMLElement>, path: string, entering: boolean) => {
+    if (isActive(path)) return;
+    const el = e.currentTarget;
+    if (entering) {
+      el.style.backgroundColor = 'rgba(0, 137, 123, 0.1)';
+      el.style.border = `2px solid ${BLACK}`;
+      el.style.boxShadow = `3px 3px 0 ${WHITE}`;
+      el.style.transform = 'translate(-1px,-1px)';
+    } else {
+      el.style.backgroundColor = 'transparent';
+      el.style.border = `2px solid transparent`;
+      el.style.boxShadow = 'none';
+      el.style.transform = 'none';
+    }
   };
 
   return (
-    <aside className="w-64 bg-background border-r-2 border-border flex flex-col h-screen sticky top-0 transition-colors duration-300">
-      <div className="flex h-20 items-center px-6 border-b-2 border-border shrink-0">
-        <div className="flex items-center gap-2">
-          <Heart className="h-5 w-5 text-primary stroke-[1.5pt]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-foreground">NexusImpact</span>
-        </div>
+    <aside style={{ width: 256, backgroundColor: SIDEBAR_BG, borderRight: `2.5px solid ${BLACK}`, display: 'flex', flexDirection: 'column', height: '100vh', position: 'sticky', top: 0 }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', height: 80, alignItems: 'center', padding: '0 1.5rem', borderBottom: `2.5px solid ${BLACK}`, backgroundColor: HEADER_BG, flexShrink: 0 }}>
+        <Heart style={{ width: 18, height: 18, color: PUR, strokeWidth: 1.5, marginRight: 10 }} />
+        <span style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.3em', textTransform: 'uppercase', color: FG }}>
+          NexusImpact
+        </span>
       </div>
-      
-      <nav className="mt-8 px-4 space-y-2 flex-1">
-        <Link href="/dashboard" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/dashboard')}`}>
-          <LayoutDashboard className="mr-3 h-4 w-4 stroke-[1.5pt]" />
-          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Dashboard</span>
+
+      {/* Nav */}
+      <nav style={{ padding: '2rem 1rem', display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+        <Link href="/dashboard" style={linkStyle('/dashboard')}
+          onMouseEnter={e => handleHover(e, '/dashboard', true)}
+          onMouseLeave={e => handleHover(e, '/dashboard', false)}
+        >
+          <LayoutDashboard style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+          Dashboard
         </Link>
+
         {(user.role === 'NGO_ADMIN' || user.role === 'FIELD_WORKER') && (
-          <Link href="/surveys/new" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/surveys/new')}`}>
-            <PlusCircle className="mr-3 h-4 w-4 stroke-[1.5pt]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Add Data</span>
+          <Link href="/surveys/new" style={linkStyle('/surveys/new')}
+            onMouseEnter={e => handleHover(e, '/surveys/new', true)}
+            onMouseLeave={e => handleHover(e, '/surveys/new', false)}
+          >
+            <PlusCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+            Add Data
           </Link>
         )}
+
         {user.role === 'NGO_ADMIN' && (
           <>
-            <Link href="/admin/verification" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/admin/verification')}`}>
-              <CheckCircle className="mr-3 h-4 w-4 stroke-[1.5pt]" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Verification</span>
+            <Link href="/admin/verification" style={linkStyle('/admin/verification')}
+              onMouseEnter={e => handleHover(e, '/admin/verification', true)}
+              onMouseLeave={e => handleHover(e, '/admin/verification', false)}
+            >
+              <CheckCircle style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+              Verification
             </Link>
-            <Link href="/admin" className={`flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent transition-all duration-300 ${isActive('/admin')}`}>
-              <Users className="mr-3 h-4 w-4 stroke-[1.5pt]" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em]">Admin Panel</span>
+            <Link href="/admin/volunteers" style={linkStyle('/admin/volunteers')}
+              onMouseEnter={e => handleHover(e, '/admin/volunteers', true)}
+              onMouseLeave={e => handleHover(e, '/admin/volunteers', false)}
+            >
+              <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+              Volunteer Requests
+            </Link>
+            <Link href="/admin" style={linkStyle('/admin')}
+              onMouseEnter={e => handleHover(e, '/admin', true)}
+              onMouseLeave={e => handleHover(e, '/admin', false)}
+            >
+              <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+              Admin Panel
             </Link>
           </>
         )}
       </nav>
 
-      <div className="p-4 border-t-2 border-border mt-auto">
+      {/* Theme toggle */}
+      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}` }}>
         {mounted && (
           <button
-            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-            className="w-full flex items-center px-4 py-3 rounded-[4px] border-2 border-transparent text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-300 group"
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '10px 16px', fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: FG, backgroundColor: 'transparent', border: `2px solid transparent`, cursor: 'pointer', transition: 'all 0.15s ease' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0, 137, 123, 0.1)'; (e.currentTarget as HTMLElement).style.border = `2px solid ${BLACK}`; (e.currentTarget as HTMLElement).style.boxShadow = `3px 3px 0 ${WHITE}`; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.border = `2px solid transparent`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
-            <div className="relative mr-3 h-4 w-4 flex items-center justify-center">
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-primary stroke-[1.5pt]" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-primary stroke-[1.5pt]" />
+            <div style={{ position: 'relative', width: 16, height: 16, marginRight: 12 }}>
+              <Sun style={{ width: 16, height: 16, strokeWidth: 1.5, color: PUR }} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-              {resolvedTheme === "dark" ? "Light Mode" : "Dark Mode"}
-            </span>
+            {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
           </button>
         )}
       </div>

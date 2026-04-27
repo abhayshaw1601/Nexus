@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Task from '../models/Task';
 import { findMatchingVolunteers } from '../services/matchingService';
+import { notifyNearbyVolunteers } from '../services/notificationService';
 
 export const getTasks = async (req: Request, res: Response) => {
   try {
@@ -53,6 +54,15 @@ export const createTaskFromSurvey = async (req: Request, res: Response) => {
 
     // Trigger matching and notifications
     await findMatchingVolunteers(task, io);
+    
+    // Trigger the new proximity-based crisis alerts for On-Duty volunteers
+    await notifyNearbyVolunteers(io, {
+      id: task._id.toString(),
+      name: task.description || 'New Crisis',
+      category: task.category,
+      urgencyScore: task.urgencyScore,
+      coordinates: task.location.coordinates as [number, number]
+    });
 
     res.status(201).json(task);
   } catch (error) {

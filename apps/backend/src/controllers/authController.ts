@@ -42,6 +42,8 @@ export const register = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
+        specialization: user.specialization,
       },
     });
   } catch (error) {
@@ -75,6 +77,8 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        status: user.status,
+        specialization: user.specialization,
       },
     });
   } catch (error) {

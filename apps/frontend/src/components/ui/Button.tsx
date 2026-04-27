@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -7,36 +9,63 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'mint';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
 }
 
+const BLACK = 'var(--border-color)';
+const WHITE = 'var(--shadow-color)';
+const PUR   = 'var(--pur)';
+const YLW   = 'var(--ylw)';
+const BG    = 'var(--bg)';
+const FG    = 'var(--fg)';
+
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, children, ...props }, ref) => {
-    const variants = {
-      primary: 'bg-primary text-primary-foreground hover:opacity-90 active:scale-95',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      outline: 'bg-transparent border-2 border-foreground hover:bg-foreground hover:text-background transition-all duration-300',
-      ghost: 'bg-transparent hover:bg-muted text-muted-foreground hover:text-foreground',
+  ({ className, variant = 'primary', size = 'md', isLoading, children, style, ...props }, ref) => {
+    const bgMap: Record<string, string> = {
+      primary: PUR,
+      secondary: YLW,
+      outline: 'transparent',
+      ghost: 'transparent',
+      mint: '#6ee7b7',
+    };
+    const colorMap: Record<string, string> = {
+      primary: '#000000',
+      secondary: '#000000',
+      outline: FG,
+      ghost: FG,
+      mint: '#000000',
+    };
+    const sizeMap: Record<string, React.CSSProperties> = {
+      sm: { padding: '8px 16px', fontSize: '0.65rem' },
+      md: { padding: '12px 24px', fontSize: '0.75rem' },
+      lg: { padding: '16px 32px', fontSize: '0.85rem' },
     };
 
-    const sizes = {
-      sm: 'px-4 py-2 text-xs font-black uppercase tracking-widest',
-      md: 'px-6 py-3 text-sm font-black uppercase tracking-widest',
-      lg: 'px-8 py-4 text-base font-black uppercase tracking-widest',
+    const base: React.CSSProperties = {
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900,
+      textTransform: 'uppercase', letterSpacing: '0.1em',
+      backgroundColor: bgMap[variant ?? 'primary'],
+      color: colorMap[variant ?? 'primary'],
+      border: `2.5px solid ${BLACK}`,
+      boxShadow: `4px 4px 0px ${WHITE}`,
+      cursor: 'pointer',
+      transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+      ...sizeMap[size ?? 'md'],
+      ...style,
     };
 
     return (
       <button
         ref={ref}
-        className={cn(
-          'inline-flex items-center justify-center rounded-[4px] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50',
-          variants[variant],
-          sizes[size],
-          className
-        )}
+        style={base}
         disabled={isLoading || props.disabled}
+        onMouseDown={e => { const el = e.currentTarget; el.style.transform = 'translate(4px,4px)'; el.style.boxShadow = `0px 0px 0px ${WHITE}`; }}
+        onMouseUp={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `4px 4px 0px ${WHITE}`; }}
+        onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `4px 4px 0px ${WHITE}`; }}
         {...props}
       >
         {isLoading ? (

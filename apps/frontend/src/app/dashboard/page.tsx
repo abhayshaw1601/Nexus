@@ -4,320 +4,255 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { LayoutDashboard, LogOut, Map as MapIcon, PlusCircle, Users, MapPin, ChevronDown, Filter } from "lucide-react";
+import { LogOut, MapPin, ChevronDown, Filter } from "lucide-react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { useState } from "react";
-import Link from "next/link";
+import { io, Socket } from "socket.io-client";
 
 import Sidebar from "@/components/Sidebar";
+import VolunteerVerificationGuard from "@/components/VolunteerVerificationGuard";
+import NotificationModal from "@/components/NotificationModal";
 
 const MapboxHeatmap = dynamic(() => import("@/components/Heatmap"), { ssr: false });
+const VolunteerMap = dynamic(() => import("@/components/VolunteerMap"), { ssr: false });
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [tasks, setTasks] = useState<any[]>([]);
   const [centerLocation, setCenterLocation] = useState<[number, number] | null>(null);
   const [searchCoords, setSearchCoords] = useState("");
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("ALL");
+  const [isOnDuty, setIsOnDuty] = useState(false);
   const router = useRouter();
 
-  // dynamic stats
-  const pendingSurveys = tasks.filter(t => t.status === 'OPEN').length;
-  const activeTasks = tasks.filter(t => t.status === 'ASSIGNED').length;
-  const impact = Math.min(100, tasks.length * 5) + "%";
-
-  const handleSearch = () => {
-    const coords = searchCoords.split(',').map(s => Number(s.trim()));
-    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-      setCenterLocation([coords[0], coords[1]]);
-    } else {
-      alert("Please enter valid coordinates, e.g., 12.97, 77.59");
-    }
-  };
-
-  const handleLocateMe = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCenterLocation([position.coords.latitude, position.coords.longitude]);
-          setSearchCoords(`${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`);
-        },
-        () => {
-          alert("Unable to retrieve your location.");
-        }
-      );
-    }
-  };
-
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-
-    if (status === "authenticated") {
+    if (status === "unauthenticated") router.push("/login");
+    else if (status === "authenticated") {
       fetchTasks();
-    }
-  }, [status, router]);
-
-  const handleAcceptTask = async (taskId: string) => {
-    try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/accept`, {
-        volunteerId: (session?.user as any)?.id
-      }, {
-        headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
+      const s = io(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000", {
+        auth: { token: (session.user as any).accessToken }
       });
-      fetchTasks();
-    } catch (err) {
-      alert("Failed to accept task");
+      setSocket(s);
+      return () => { s.disconnect(); };
     }
-  };
-
-  const handleCompleteTask = async (taskId: string, file: File, taskCoords: [number, number]) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-    // For testing, just send back the exact task coordinates to pass the distance validation
-    formData.append("coordinates[]", String(taskCoords[0]));
-    formData.append("coordinates[]", String(taskCoords[1]));
-
-    try {
-      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/complete`, formData, {
-        headers: { 
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${(session?.user as any).accessToken}`
-        }
-      });
-      fetchTasks();
-      alert("Task completed successfully!");
-    } catch (err) {
-      alert("Failed to complete task");
-    }
-  };
+  }, [status, router, session]);
 
   const fetchTasks = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tasks`, {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/tasks/all`, {
         headers: { Authorization: `Bearer ${(session?.user as any).accessToken}` }
       });
       setTasks(res.data);
-    } catch (err) {
-      console.error("Failed to fetch tasks");
-    }
+    } catch { console.error("Failed to fetch tasks"); }
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-      </div>
-    );
-  }
+  if (status === "loading" || !session) return null;
 
-  if (!session) return null;
+  const pendingSurveys = tasks.filter((t) => t.status === "OPEN").length;
+  const activeTasks = tasks.filter((t) => t.status === "ASSIGNED").length;
+  const impactScore = "15%";
 
-  const user = session.user as any;
+  const user = session!.user as any;
+  const categories = ["ALL", ...Array.from(new Set(tasks.map((t) => t.category).filter(Boolean)))];
+  const filtered = filterCategory === "ALL" ? tasks : tasks.filter((t) => t.category === filterCategory);
+  const displayed = showAll ? filtered : filtered.slice(0, 5);
+
+  const BLACK = 'var(--border-color)';
+  const WHITE = 'var(--shadow-color)';
+  const PUR   = 'var(--pur)';
+  const YLW   = 'var(--ylw)';
+  const CRIT  = 'var(--accent-critical)';
+  const SUCC  = 'var(--accent-success)';
+  const SIDEBAR_BG = 'var(--sidebar-bg)';
+
+  // ─── Theme-Aware Inline style tokens ──────────────────────────────────────
+  const S = {
+    page:       { display:'flex', height:'100vh', backgroundColor:'var(--bg)', position:'relative' as const },
+    main:       { flex:1, overflowY:'auto' as const, backgroundColor:'var(--bg)' },
+    header:     { display:'flex', height:80, alignItems:'center', justifyContent:'space-between', padding:'0 2rem', backgroundColor:'var(--header-bg)', borderBottom:'2.5px solid var(--border-color)' },
+    h1:         { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'1.1rem', textTransform:'uppercase' as const, letterSpacing:'0.2em', color:'var(--fg)', margin:0 },
+    roleBadge:  { fontFamily:"'Space Mono',monospace", fontSize:'0.6rem', fontWeight:700, textTransform:'uppercase' as const, letterSpacing:'0.2em', backgroundColor:PUR, color:'#FFFFFF', border:`2px solid ${BLACK}`, boxShadow:`2px 2px 0 ${WHITE}`, padding:'4px 12px' },
+    statsGrid:  { display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'2rem', padding:'2rem 2rem 0' },
+    cardPurple: { backgroundColor:PUR, border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, padding:'2rem' },
+    cardYellow: { backgroundColor:YLW, border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, padding:'2rem' },
+    cardLabel:  { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.6rem', textTransform:'uppercase' as const, letterSpacing:'0.25em', color:'#000', marginBottom:8 },
+    cardValue:  { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'3.5rem', color:'#000', lineHeight:1, margin:0 },
+    cardValueWhite: { fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'3.5rem', color:'#FFFFFF', lineHeight:1, margin:0 },
+    cardLabelWhite: { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.6rem', textTransform:'uppercase' as const, letterSpacing:'0.25em', color:'#FFFFFF', marginBottom:8 },
+    mapSection: { padding:'2rem', display:'flex', flexDirection:'column' as const, height:500 },
+    mapHeader:  { display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:16, paddingBottom:16, borderBottom:`2.5px solid var(--border-color)` },
+    mapTitle:   { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'1.4rem', textTransform:'uppercase' as const, letterSpacing:'-0.05em', color:'var(--fg)', margin:0 },
+    searchInput:{ border:`2.5px solid ${BLACK}`, padding:'8px 12px', backgroundColor:'var(--card-bg)', fontFamily:"'Space Mono',monospace", fontSize:'0.75rem', outline:'none', color:'var(--fg)', boxShadow:`4px 4px 0 ${WHITE}` },
+    tableWrap:  { margin:'0 2rem 2rem', backgroundColor:'var(--card-bg)', border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, overflow:'hidden' },
+    tableHead:  { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.5rem', borderBottom:`2.5px solid var(--border-color)` },
+    tableTitle: { fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'1.1rem', color:'var(--fg)', margin:0 },
+    countBadge: { fontFamily:"'Space Mono',monospace", fontSize:'0.65rem', fontWeight:700, textTransform:'uppercase' as const, backgroundColor:PUR, color:'#FFFFFF', border:`2px solid ${BLACK}`, boxShadow:`2px 2px 0 ${WHITE}`, padding:'3px 10px' },
+    th:         { padding:'12px 24px', fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.65rem', textTransform:'uppercase' as const, letterSpacing:'0.1em', color:'#000', backgroundColor:YLW, borderRight:`2px solid ${BLACK}`, borderBottom:`2.5px solid ${BLACK}` },
+    td:         { padding:'12px 24px', fontFamily:"'Space Mono',monospace", fontSize:'0.8rem', color:'var(--fg)', borderRight:'1px solid rgba(128,128,128,0.2)', borderBottom:'1px solid rgba(128,128,128,0.2)' },
+    tdB:        { padding:'12px 24px', borderRight:'1px solid rgba(128,128,128,0.2)', borderBottom:'1px solid rgba(128,128,128,0.2)' },
+    select:     { appearance:'none' as const, backgroundColor:'var(--card-bg)', border:`2px solid ${BLACK}`, padding:'6px 32px', fontFamily:"'Space Mono',monospace", fontSize:'0.7rem', fontWeight:700, cursor:'pointer', color:'var(--fg)' },
+  };
+
+  const statusStyle = (st: string): React.CSSProperties => ({
+    fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'0.6rem', textTransform:'uppercase',
+    letterSpacing:'0.1em', padding:'3px 8px', border:`2px solid ${BLACK}`, boxShadow:`2px 2px 0px ${WHITE}`, display:'inline-block',
+    backgroundColor: st==='OPEN' ? PUR : st==='ASSIGNED' ? YLW : st==='COMPLETED' ? SUCC : 'var(--muted-fg)',
+    color: (st==='OPEN' || st==='COMPLETED') ? '#FFFFFF' : '#000000',
+  });
+
+  const urgencyStyle = (score: number): React.CSSProperties => ({
+    fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'0.6rem', textTransform:'uppercase',
+    padding:'3px 8px', border:`2px solid ${BLACK}`, boxShadow:`2px 2px 0px ${WHITE}`, display:'inline-block',
+    backgroundColor: score >= 4 ? CRIT : YLW, 
+    color: score >= 4 ? '#FFFFFF' : '#000000',
+  });
 
   return (
-    <div className="flex h-screen bg-background transition-colors duration-300">
-      <Sidebar />
+    <VolunteerVerificationGuard>
+      <div style={S.page}>
+        <Sidebar />
+        <NotificationModal socket={socket} volunteerLocation={centerLocation} />
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <header className="flex h-20 items-center justify-between px-8 bg-background border-b-2 border-border transition-colors duration-300">
-          <h1 className="text-xl font-black uppercase tracking-[0.2em] text-foreground">Overview [ {user.name} ]</h1>
-          <div className="flex items-center space-x-6">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary bg-primary/10 px-4 py-2 rounded-[4px]">
-              {user.role}
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => signOut()} className="text-muted-foreground hover:text-foreground">
-              <LogOut className="mr-2 h-4 w-4 stroke-[1.5pt]" />
-              Logout
-            </Button>
-          </div>
-        </header>
+        <main style={S.main}>
 
-        <div className="p-8 space-y-12 max-w-[1440px] mx-auto">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="neo-border p-8 bg-card rounded-[4px] space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Pending Surveys</h3>
-              <p className="text-5xl font-black text-foreground">{pendingSurveys}</p>
+          {/* ── HEADER ── */}
+          <header style={S.header}>
+            <h1 style={S.h1}>Overview [ {user.name} ]</h1>
+            <div style={{ display:'flex', alignItems:'center', gap:'1.5rem' }}>
+              {user.role === 'VOLUNTEER' && (
+                <div style={{ display:'flex', alignItems:'center', gap:12, backgroundColor:'var(--card-bg)', border:`2px solid ${BLACK}`, padding:'6px 14px', boxShadow: `3px 3px 0 ${WHITE}` }}>
+                  <span style={{ fontSize:'0.8rem', fontWeight:700, color: isOnDuty ? SUCC : 'var(--muted-fg)' }}>
+                    {isOnDuty ? 'On Duty' : 'Off Duty'}
+                  </span>
+                  <button
+                    onClick={() => setIsOnDuty(!isOnDuty)}
+                    style={{ position:'relative', width:44, height:24, borderRadius:9999, backgroundColor: isOnDuty ? SUCC : '#444', border:'none', cursor:'pointer' }}
+                  >
+                    <span style={{ position:'absolute', top:4, left: isOnDuty ? 22 : 4, width:16, height:16, borderRadius:'50%', backgroundColor:WHITE, transition:'left 0.2s' }} />
+                  </button>
+                </div>
+              )}
+              <span style={S.roleBadge}>{user.role}</span>
+              <Button variant="ghost" size="sm" onClick={() => signOut()}>
+                <LogOut style={{ marginRight:8, width:16, height:16, strokeWidth:1.5 }} />
+                Logout
+              </Button>
             </div>
-            <div className="neo-border p-8 bg-card rounded-[4px] space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Active Tasks</h3>
-              <p className="text-5xl font-black text-foreground">{activeTasks}</p>
-            </div>
-            <div className="neo-border p-8 bg-card rounded-[4px] space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Community Impact</h3>
-              <p className="text-5xl font-black text-foreground">{impact}</p>
-            </div>
-          </div>
+          </header>
 
-          <div className="flex flex-col h-[500px] mb-12">
-            <div className="flex justify-between items-end mb-4 border-b-2 border-border pb-4 shrink-0">
-              <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground">GEOSPATIAL [ NEED_HEATMAP ]</h2>
-              <div className="flex items-center gap-4">
+          {/* ── METRIC CARDS ── */}
+          {user.role !== 'VOLUNTEER' && (
+            <div style={S.statsGrid}>
+              <div style={S.cardPurple}>
+                <p style={S.cardLabelWhite}>Pending Surveys</p>
+                <p style={S.cardValueWhite}>{pendingSurveys}</p>
+              </div>
+              <div style={S.cardYellow}>
+                <p style={S.cardLabel}>Active Tasks</p>
+                <p style={S.cardValue}>{activeTasks}</p>
+              </div>
+              <div style={{ ...S.cardPurple, backgroundColor:YLW }}>
+                <p style={S.cardLabel}>Community Impact</p>
+                <p style={S.cardValue}>{impactScore}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── GEOSPATIAL ── */}
+          <section style={S.mapSection}>
+            <div style={S.mapHeader}>
+              <div>
+                <p style={{ ...S.cardLabel, color:'var(--muted-fg)', marginBottom:4 }}>Global Intelligence</p>
+                <h2 style={S.mapTitle}>Geospatial [Need_Heatmap]</h2>
+              </div>
+              <div style={{ display:'flex', gap:12 }}>
                 <input 
-                  type="text"
-                  placeholder="Lat, Lng (e.g. 12.97, 77.59)"
+                  placeholder="Lat, Lng (e.g. 12.97, 77.59)" 
+                  style={S.searchInput}
                   value={searchCoords}
                   onChange={(e) => setSearchCoords(e.target.value)}
-                  className="neo-border bg-background rounded-[4px] px-4 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
-                <Button size="sm" onClick={handleSearch}>Search</Button>
-                <Button size="sm" variant="outline" onClick={handleLocateMe} title="Use my current location">
-                  <MapPin className="h-4 w-4" />
+                <Button size="sm" onClick={() => {
+                  const [lat, lng] = searchCoords.split(",").map(Number);
+                  if (lat && lng) setCenterLocation([lat, lng]);
+                }}>Search</Button>
+                <Button size="sm" variant="outline" onClick={() => setCenterLocation(null)}>
+                  <MapPin style={{ width:14, height:14 }} />
                 </Button>
               </div>
             </div>
-            <div className="flex-1 min-h-0">
-              <MapboxHeatmap tasks={tasks} centerLocation={centerLocation} />
+            <div style={{ flex:1, border:`2.5px solid ${BLACK}`, boxShadow:`6px 6px 0px ${WHITE}`, position:'relative', overflow:'hidden' }}>
+              {user.role === 'VOLUNTEER' ? (
+                <VolunteerMap center={centerLocation} />
+              ) : (
+                <MapboxHeatmap tasks={tasks} center={centerLocation} />
+              )}
             </div>
-          </div>
+          </section>
 
-          {(() => {
-            const categories = ["ALL", ...Array.from(new Set(tasks.map(t => t.category).filter(Boolean)))];
-            const filtered = filterCategory === "ALL" ? tasks : tasks.filter(t => t.category === filterCategory);
-            const displayed = showAll ? filtered : filtered.slice(0, 5);
-            return (
-              <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden transition-all duration-300">
-                <div className="p-6 border-b border-border flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-lg font-bold text-foreground">Community Reports</h2>
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-primary/10 text-primary px-3 py-1 rounded-full">
-                      {filtered.length} {filtered.length === 1 ? 'report' : 'reports'}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-                      <select
-                        value={filterCategory}
-                        onChange={(e) => { setFilterCategory(e.target.value); setShowAll(false); }}
-                        className="appearance-none bg-background border border-border rounded-lg pl-8 pr-8 py-2 text-xs font-semibold text-foreground cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                      >
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat === "ALL" ? "All Categories" : cat}</option>
-                        ))}
-                      </select>
-                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
-                    </div>
-                    {filtered.length > 5 && (
-                      <Button
-                        size="sm"
-                        variant={showAll ? "outline" : "primary"}
-                        onClick={() => setShowAll(!showAll)}
-                      >
-                        {showAll ? "Show Less" : `View All (${filtered.length})`}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-                <div className={`overflow-auto transition-all duration-500 ease-in-out ${showAll ? 'max-h-[600px]' : 'max-h-[400px]'}`}>
-                  <table className="w-full text-left">
-                    <thead className="bg-muted/50 text-muted-foreground text-xs uppercase font-bold tracking-widest border-b border-border sticky top-0 z-10">
-                      <tr>
-                        <th className="px-6 py-3">Issue</th>
-                        <th className="px-6 py-3">Category</th>
-                        <th className="px-6 py-3">Urgency</th>
-                        <th className="px-6 py-3">Status</th>
-                        {(session?.user as any)?.role === 'VOLUNTEER' && (
-                          <th className="px-6 py-3 text-right">Actions</th>
-                        )}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {displayed.map((task) => (
-                        <tr 
-                          key={task._id} 
-                          className="hover:bg-muted/50 transition-colors cursor-pointer group"
-                          onClick={() => {
-                            if (task.location?.coordinates && task.location.coordinates.length >= 2) {
-                              setCenterLocation([task.location.coordinates[1], task.location.coordinates[0]]);
-                            }
-                          }}
-                        >
-                          <td className="px-6 py-4 text-sm text-foreground font-medium group-hover:text-primary transition-colors">{task.description || "No description provided"}</td>
-                          <td className="px-6 py-4 text-sm text-muted-foreground">{task.category}</td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col gap-1" title={`Urgency Score: ${task.urgencyScore}`}>
-                              <div className="w-20 h-1.5 bg-muted dark:bg-zinc-800 rounded-full overflow-hidden relative">
-                                <div 
-                                  className="h-full absolute left-0 top-0 transition-all duration-1000 ease-out rounded-full"
-                                  style={{ 
-                                    width: `${((task.urgencyScore || 0) / 5) * 100}%`,
-                                    background: 'linear-gradient(to right, #3b82f6, #06b6d4, #eab308, #f97316, #ef4444)'
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
-                              task.status === 'OPEN' ? 'text-blue-600 dark:text-blue-400' :
-                              task.status === 'ASSIGNED' ? 'text-amber-600 dark:text-amber-400' :
-                              task.status === 'COMPLETED' ? 'text-green-600 dark:text-green-400' :
-                              'text-muted-foreground'
-                            }`}>{task.status}</span>
-                          </td>
-                          {(session?.user as any)?.role === 'VOLUNTEER' && (
-                            <td className="px-6 py-4 text-right">
-                              {task.status === 'OPEN' && (
-                                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleAcceptTask(task._id); }}>
-                                  Accept
-                                </Button>
-                              )}
-                              {task.status === 'ASSIGNED' && task.assignedVolunteerId === (session?.user as any)?.id && (
-                                <div onClick={(e) => e.stopPropagation()}>
-                                  <label className="cursor-pointer bg-green-600 hover:bg-green-700 text-white text-sm font-bold py-1.5 px-3 rounded transition-colors">
-                                    Submit Proof
-                                    <input 
-                                      type="file" 
-                                      className="hidden" 
-                                      accept="image/*"
-                                      onChange={(e) => {
-                                        if (e.target.files && e.target.files[0]) {
-                                          handleCompleteTask(task._id, e.target.files[0], task.location.coordinates);
-                                        }
-                                      }} 
-                                    />
-                                  </label>
-                                </div>
-                              )}
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                      {displayed.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground font-medium">
-                            {tasks.length === 0 
-                              ? "No community reports found. Add data to see it here!"
-                              : `No reports found for category "${filterCategory}".`
-                            }
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-                {!showAll && filtered.length > 5 && (
-                  <div className="px-6 py-3 border-t border-border bg-muted/30 text-center">
-                    <button
-                      onClick={() => setShowAll(true)}
-                      className="text-xs font-bold text-primary hover:text-primary transition-all uppercase tracking-wider"
-                    >
-                      Showing {displayed.length} of {filtered.length} — Click to expand
-                    </button>
-                  </div>
-                )}
+          {/* ── TASKS TABLE ── */}
+          <section style={S.tableWrap}>
+            <div style={S.tableHead}>
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <h2 style={S.tableTitle}>Task Queue</h2>
+                <span style={S.countBadge}>{filtered.length} Records</span>
               </div>
-            );
-          })()}
-        </div>
-      </main>
-    </div>
+              <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                <div style={{ position:'relative' }}>
+                  <select 
+                    style={S.select}
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                  >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <Filter style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', width:14, height:14, color:PUR }} />
+                  <ChevronDown style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', width:14, height:14, color:PUR }} />
+                </div>
+              </div>
+            </div>
+            <div style={{ overflowX:'auto' }}>
+              <table style={{ width:'100%', borderCollapse:'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Description</th>
+                    <th style={S.th}>Category</th>
+                    <th style={S.th}>Urgency</th>
+                    <th style={S.th}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayed.map((task) => (
+                    <tr key={task._id} style={{ borderBottom:`1px solid rgba(128,128,128,0.15)` }}>
+                      <td style={S.td}>{task.description}</td>
+                      <td style={S.td}>
+                        <span style={{ fontSize:'0.7rem', fontWeight:700, textTransform:'uppercase' }}>{task.category}</span>
+                      </td>
+                      <td style={S.td}>
+                        <span style={urgencyStyle(task.urgencyScore)}>Priority {task.urgencyScore}</span>
+                      </td>
+                      <td style={S.td}>
+                        <span style={statusStyle(task.status)}>{task.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {!showAll && filtered.length > 5 && (
+              <div style={{ padding:'12px 24px', borderTop:`2.5px solid ${BLACK}`, textAlign:'center', backgroundColor:SIDEBAR_BG }}>
+                <button onClick={() => setShowAll(true)} style={{ fontFamily:"'Space Mono',monospace", fontWeight:700, fontSize:'0.7rem', textTransform:'uppercase', letterSpacing:'0.1em', background:'none', border:'none', cursor:'pointer', color:PUR }}>
+                  Showing {displayed.length} of {filtered.length} — Click to expand
+                </button>
+              </div>
+            )}
+          </section>
+
+        </main>
+      </div>
+    </VolunteerVerificationGuard>
   );
 }
