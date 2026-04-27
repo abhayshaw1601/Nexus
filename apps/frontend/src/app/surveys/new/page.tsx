@@ -125,34 +125,78 @@ export default function NewSurveyPage() {
   );
 
   return (
-    <div className="page-layout">
+    <div className="flex flex-col md:flex-row min-h-[100dvh] bg-[#F2EFE9] overflow-x-hidden">
       <Sidebar />
-      <main className="neo-main">
+      <main className="flex-1 overflow-y-auto p-6 pt-24 md:p-12 md:pt-12" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="max-w-5xl w-full mx-auto mb-10">
 
         {/* Page Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
-          <div>
-            <h1 className="page-title">
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column-reverse', 
+          gap: '1.5rem', 
+          borderBottom: `2.5px solid ${BLACK}`,
+          paddingBottom: '2rem',
+          zIndex: 30,
+          position: 'relative'
+        }} className="md:flex-row md:justify-between md:items-end">
+          <div style={{ flex: 1 }}>
+            <h1 className="page-title" style={{ lineHeight: 1.1, margin: 0, textAlign: 'left' }}>
               Add Community Data
             </h1>
-            <p className="page-subtitle">
+            <p className="page-subtitle" style={{ marginTop: '1rem' }}>
               Upload a paper survey for AI processing or enter data manually.
             </p>
           </div>
-          <Link href="/dashboard">
-            <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+          <Link href="/dashboard" style={{ width: '100%', maxWidth: 'fit-content' }}>
+            <button style={{ 
+              fontFamily: "'Plus Jakarta Sans',sans-serif", 
+              fontWeight: 900, 
+              fontSize: '0.7rem', 
+              textTransform: 'uppercase', 
+              letterSpacing: '0.15em', 
+              backgroundColor: PUR, 
+              color: '#FFFFFF', 
+              border: `2.5px solid ${BLACK}`, 
+              boxShadow: SHADOW, 
+              padding: '12px 24px', 
+              cursor: 'pointer', 
+              width: '100%',
+              whiteSpace: 'nowrap' 
+            }}>
               ← Back to Dashboard
             </button>
           </Link>
         </div>
 
         {/* Tab Switcher */}
-        <div className="tab-switcher">
+        <div className="tab-switcher" style={{ 
+          display: 'flex', 
+          width: '100%', 
+          zIndex: 20,
+          position: 'relative',
+          gap: 0
+        }}>
           {(['ai', 'manual'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: activeTab === tab ? 'var(--neo-shadow)' : SHADOW, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
+              style={{ 
+                fontFamily: "'Plus Jakarta Sans',sans-serif", 
+                fontWeight: 900, 
+                fontSize: '12px', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.1em', 
+                padding: '14px 20px', 
+                backgroundColor: activeTab === tab ? PUR : 'var(--card-bg)', 
+                color: activeTab === tab ? '#FFFFFF' : FG, 
+                border: `2.5px solid ${BLACK}`, 
+                boxShadow: activeTab === tab ? 'none' : SHADOW, 
+                transform: activeTab === tab ? 'translate(2px,2px)' : 'none', 
+                cursor: 'pointer', 
+                flex: 1,
+                transition: 'all 0.1s'
+              }}
             >
               {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
             </button>
@@ -160,7 +204,7 @@ export default function NewSurveyPage() {
         </div>
 
         {/* Main form card */}
-        <div className="neo-card-full">
+        <div className="neo-card-full" style={{ zIndex: 10, position: 'relative', marginTop: 0 }}>
 
           {/* ─ AI Tab ─ */}
           {activeTab === 'ai' && (
@@ -279,6 +323,7 @@ export default function NewSurveyPage() {
               <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
             </div>
           )}
+        </div>
         </div>
       </main>
     </div>

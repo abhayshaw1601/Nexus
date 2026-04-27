@@ -196,7 +196,7 @@ export default function Sidebar() {
           gridTemplateColumns: '48px 1fr 110px',
           alignItems: 'center',
           padding: '0 16px',
-          zIndex: 60,
+          zIndex: 1000,
         }}>
           <button
             onClick={() => setMobileOpen(true)}

@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { LogOut, MapPin, ChevronDown, Filter } from "lucide-react";
+import { LogOut, MapPin, ChevronDown, Filter, LayoutDashboard } from "lucide-react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { useState } from "react";
@@ -245,30 +245,44 @@ export default function DashboardPage() {
           {/* ── TASKS TABLE ── */}
           <section className="table-wrap-container" style={S.tableWrap}>
             <style jsx>{`
-              @media (max-width: 767px) {
+              @media (max-width: 1024px) {
+                .desktop-only { display: none !important; }
+                .mobile-only { display: block !important; }
+                
                 .table-wrap-container {
                   margin: 16px !important;
                   box-shadow: 4px 4px 0px ${WHITE} !important;
                 }
                 .table-header-inner {
-                  padding: 1rem !important;
+                  padding: 1.5rem !important;
+                  flex-direction: column !important;
+                  align-items: flex-start !important;
+                  gap: 1rem !important;
                 }
-                @media (max-width: 600px) {
-                  .table-header-inner {
-                    flex-direction: column !important;
-                    align-items: flex-start !important;
-                    gap: 1rem !important;
-                  }
-                  .table-controls-row {
-                    width: 100% !important;
-                    justify-content: flex-start !important;
-                    gap: 12px !important;
-                  }
+                .table-controls-row {
+                  width: 100% !important;
+                  display: flex !important;
+                  justify-content: space-between !important;
+                  gap: 12px !important;
+                }
+                .table-controls-row > div {
+                  flex: 1;
+                }
+                .table-controls-row select {
+                  width: 100%;
                 }
               }
+              @media (min-width: 1025px) {
+                .mobile-only { display: none !important; }
+                .desktop-only { display: block !important; }
+              }
             `}</style>
+            
             <div className="table-header-inner" style={S.tableHead}>
-              <h2 style={S.tableTitle}>Task Queue</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <h2 style={S.tableTitle}>Task Queue</h2>
+                <LayoutDashboard style={{ width: 18, height: 18, color: PUR }} />
+              </div>
               <div className="table-controls-row" style={{ display:'flex', gap:12, alignItems:'center' }}>
                 <span style={S.countBadge}>{filtered.length} Records</span>
                 <div style={{ position:'relative' }}>
@@ -286,7 +300,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Desktop Table */}
-            <div className="desktop-only" style={{ display: 'block' }}>
+            <div className="desktop-only">
               <div style={{ overflowX:'auto' }}>
                 <table style={{ width:'100%', borderCollapse:'collapse' }}>
                   <thead>
@@ -318,24 +332,45 @@ export default function DashboardPage() {
             </div>
 
             {/* Mobile Card Stack */}
-            <div className="mobile-only" style={{ display: 'none' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '1rem' }}>
-                {displayed.map((task) => (
-                  <div key={task._id} style={{ border: `2px solid ${BLACK}`, padding: '1rem', backgroundColor: 'var(--card-bg)', boxShadow: `3px 3px 0px 0px #000`, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ marginBottom: 12 }}>
-                      <span className="neo-badge" style={{ color: PUR, marginBottom: 12, border: `2.5px solid ${BLACK}` }}>{task.category}</span>
-                      <div className="neo-scroll-content" style={{ maxHeight: '100px', paddingRight: '4px' }}>
-                        <h3 style={{ margin: '4px 0', fontSize: '0.9rem', fontWeight: 900 }}>{task.description}</h3>
+            <div className="mobile-only">
+              <div style={{ display: 'flex', flexDirection: 'column', padding: '1.5rem' }}>
+                {displayed.length === 0 ? (
+                  <div style={{ padding: '3rem 1.5rem', border: `2px solid ${BLACK}`, backgroundColor: '#FFFFFF', textAlign: 'center', boxShadow: `4px 4px 0px #000` }}>
+                    <LayoutDashboard style={{ width: 48, height: 48, color: 'var(--muted-fg)', margin: '0 auto 1rem', opacity: 0.3 }} />
+                    <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted-fg)' }}>
+                      Global Tasks (0)
+                    </p>
+                  </div>
+                ) : (
+                  displayed.map((task) => (
+                    <div key={task._id} style={{ border: `2px solid ${BLACK}`, padding: '1.5rem', backgroundColor: 'var(--card-bg)', boxShadow: `4px 4px 0px #000`, marginBottom: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ marginBottom: 16 }}>
+                        <div className="neo-scroll-content" style={{ maxHeight: '120px', overflowY: 'auto', paddingRight: '8px', marginBottom: 16 }}>
+                          <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, lineHeight: 1.3 }}>{task.description}</h3>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Category</span>
+                            <span className="neo-badge" style={{ color: PUR, border: `2px solid ${BLACK}`, backgroundColor: 'transparent', padding: '2px 8px', fontSize: '0.7rem' }}>{task.category}</span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Urgency</span>
+                            <span style={{ ...urgencyStyle(task.urgencyScore), boxShadow: '2px 2px 0 #000' }}>
+                              Priority {task.urgencyScore}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Status</span>
+                            <span style={statusStyle(task.status)}>{task.status}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 'auto', paddingTop: 8 }}>
-                      <span className="neo-badge" style={{ backgroundColor: task.urgencyScore >= 4 ? 'var(--accent-critical)' : 'var(--ylw)', color: task.urgencyScore >= 4 ? '#FFFFFF' : '#000000', boxShadow: '2px 2px 0 #000' }}>
-                        Priority {task.urgencyScore}
-                      </span>
-                      <span style={statusStyle(task.status)}>{task.status}</span>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
