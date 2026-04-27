@@ -49,7 +49,7 @@ export const register = async (req: Request, res: Response) => {
     
     await user.save();
     
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.ngoId?.toString());
     
     res.status(201).json({
       token,
@@ -85,7 +85,7 @@ export const login = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.ngoId?.toString());
     
     res.json({
       token,
@@ -96,6 +96,7 @@ export const login = async (req: Request, res: Response) => {
         role: user.role,
         status: user.status,
         specialization: user.specialization,
+        ngoId: user.ngoId,
       },
     });
   } catch (error) {

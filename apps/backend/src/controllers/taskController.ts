@@ -6,8 +6,10 @@ import { notifyNearbyVolunteers } from '../services/notificationService';
 export const getTasks = async (req: Request, res: Response) => {
   try {
     const ngoId = (req as any).user?.ngoId;
-    const query: any = { status: { $ne: 'VERIFIED' } };
-    if (ngoId) query.ngoId = ngoId;
+    if (!ngoId) {
+      return res.status(403).json({ message: 'Organization context missing' });
+    }
+    const query: any = { status: { $ne: 'VERIFIED' }, ngoId };
 
     const tasks = await Task.find(query);
 
@@ -70,7 +72,7 @@ export const createTaskFromSurvey = async (req: Request, res: Response) => {
 
     // Trigger matching and notifications
     await findMatchingVolunteers(task, io);
-    
+
     // Trigger the new proximity-based crisis alerts for On-Duty volunteers
     await notifyNearbyVolunteers(io, {
       id: task._id.toString(),
@@ -161,7 +163,7 @@ export const verifyTask = async (req: Request, res: Response) => {
     const { id } = req.params;
     const task = await Task.findById(id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
-    
+
     task.status = 'VERIFIED';
     await task.save();
     res.json(task);

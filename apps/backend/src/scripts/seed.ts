@@ -1,143 +1,148 @@
 import mongoose from 'mongoose';
-import Task from '../models/Task';
+import dotenv from 'dotenv';
 import User from '../models/User';
+import Task from '../models/Task';
+import NGO from '../models/NGO';
 import Survey from '../models/Survey';
 import { hashPassword } from '../utils/auth';
-import dotenv from 'dotenv';
-import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/nexusimpact';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/nexus_impact';
 
-const seedDB = async () => {
+async function seed() {
   try {
+    console.log('Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
-    console.log('Connected to MongoDB for seeding');
     
-    // 1. Seed Users (Upsert Logic)
-    const hashedAdminPassword = await hashPassword('admin123');
-    const hashedWorkerPassword = await hashPassword('worker123');
-    const hashedVolunteerPassword = await hashPassword('volunteer123');
+    // 1. Clear Existing Data
+    await Promise.all([
+      User.deleteMany({}),
+      Task.deleteMany({}),
+      NGO.deleteMany({}),
+      Survey.deleteMany({})
+    ]);
+    console.log('Database cleared.');
 
-    const userData = [
+    const password = await hashPassword('password123');
+
+    // 2. Create Admin Users (Approved)
+    const admin1 = await new User({
+      name: 'Alpha Admin',
+      email: 'admin@alpha.org',
+      password,
+      role: 'NGO_ADMIN',
+      status: 'approved'
+    }).save();
+
+    const admin2 = await new User({
+      name: 'Beta Admin',
+      email: 'admin@beta.org',
+      password,
+      role: 'NGO_ADMIN',
+      status: 'approved'
+    }).save();
+
+    // 3. Create NGOs (Linked to Admins)
+    const ngo1 = await new NGO({
+      name: 'Global Response Alpha',
+      description: 'Rapid humanitarian response and medical aid.',
+      joinCode: 'ALPHA1',
+      adminId: admin1._id,
+      contactEmail: 'admin@alpha.org',
+      website: 'https://alpha.org',
+      location: { type: 'Point', coordinates: [77.5946, 12.9716] }, // Bangalore
+      verified: true
+    }).save();
+
+    const ngo2 = await new NGO({
+      name: 'Civic Support Beta',
+      description: 'Community-led disaster relief and infrastructure support.',
+      joinCode: 'BETA02',
+      adminId: admin2._id,
+      contactEmail: 'info@beta-civic.org',
+      website: 'https://beta-civic.org',
+      location: { type: 'Point', coordinates: [72.8777, 19.0760] }, // Mumbai
+      verified: true
+    }).save();
+
+    // 4. Update Admins with their NGO IDs
+    await User.findByIdAndUpdate(admin1._id, { ngoId: ngo1._id });
+    await User.findByIdAndUpdate(admin2._id, { ngoId: ngo2._id });
+
+    // 5. Create Supporting Users (Linked to NGOs, Status Pending for testing)
+    const worker1 = await new User({
+      name: 'Alpha Field Agent',
+      email: 'worker@alpha.org',
+      password,
+      role: 'FIELD_WORKER',
+      ngoId: ngo1._id,
+      status: 'pending'
+    }).save();
+
+    const volunteer2 = await new User({
+      name: 'Beta Volunteer',
+      email: 'volunteer@beta.org',
+      password,
+      role: 'VOLUNTEER',
+      ngoId: ngo2._id,
+      status: 'pending'
+    }).save();
+
+    console.log('Users and NGOs created successfully.');
+
+    // 6. Create Tasks (Scoped to NGOs) - Urgency 1 to 5
+    await Task.create([
       {
-        name: 'NGO Admin',
-        email: 'admin@nexus.com',
-        password: hashedAdminPassword,
-        role: 'NGO_ADMIN',
-        isVerified: true
-      },
-      {
-        name: 'Field Worker John',
-        email: 'worker@nexus.com',
-        password: hashedWorkerPassword,
-        role: 'FIELD_WORKER',
-        isVerified: true
-      },
-      {
-        name: 'Volunteer Sarah',
-        email: 'volunteer@nexus.com',
-        password: hashedVolunteerPassword,
-        role: 'VOLUNTEER',
-        skills: ['Medical', 'Sanitation'],
-        location: { type: 'Point', coordinates: [77.5946, 12.9716] },
-        isVerified: true,
-        impactScore: 45
-      }
-    ];
-
-    for (const u of userData) {
-      await User.findOneAndUpdate({ email: u.email }, u, { upsert: true, new: true });
-    }
-
-    const adminUser = await User.findOne({ email: 'admin@nexus.com' });
-    const workerUser = await User.findOne({ email: 'worker@nexus.com' });
-    const volunteerUser = await User.findOne({ email: 'volunteer@nexus.com' });
-
-    const adminId = adminUser?._id;
-    const workerId = workerUser?._id;
-    const volunteerId = volunteerUser?._id;
-
-    console.log('Successfully seeded/upserted users');
-
-    // 2. Seed Surveys (Linked to Field Worker)
-    // For surveys and tasks, we might still want a clean start, or just upsert them too.
-    // I'll keep the deleteMany for these to ensure the "stack" is fresh for the user's check.
-    await Survey.deleteMany({});
-    await Task.deleteMany({});
-
-    const surveys = await Survey.insertMany([
-      {
-        fieldWorkerId: workerId,
-        rawImageUrl: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?q=80&w=2070&auto=format&fit=crop',
-        status: 'VERIFIED',
-        description: 'Critical drainage blockage in Sector 4',
-        category: 'Sanitation',
-        urgency: 5,
-        location: { type: 'Point', coordinates: [77.5946, 12.9716] },
-        aiExtractedData: {
-          rawText: 'Critical drainage blockage in Sector 4',
-          suggestedCategory: 'Sanitation',
-          suggestedUrgency: 5,
-          suggestedDescription: 'Major drainage overflow near market area'
-        }
-      },
-      {
-        fieldWorkerId: workerId,
-        rawImageUrl: 'https://images.unsplash.com/photo-1583324113626-70df0f43aa2b?q=80&w=2070&auto=format&fit=crop',
-        status: 'SUBMITTED',
-        description: 'Road crack observed after heavy rain',
-        category: 'Infrastructure',
-        urgency: 3,
-        location: { type: 'Point', coordinates: [77.6046, 12.9816] },
-        aiExtractedData: {
-          rawText: 'Road crack observed after heavy rain',
-          suggestedCategory: 'Infrastructure',
-          suggestedUrgency: 3,
-          suggestedDescription: 'Pothole and road surface degradation'
-        }
-      },
-      {
-        fieldWorkerId: workerId,
-        status: 'DRAFT',
-        description: 'Partial draft of a new medical center request',
+        description: 'Medical supply shortage in Sector 4',
         category: 'Medical',
-        urgency: 2,
-        location: { type: 'Point', coordinates: [77.5846, 12.9616] },
-        dataStack: { step1: "Completed", notes: "Needs assessment underway" }
+        urgencyScore: 5,
+        status: 'OPEN',
+        ngoId: ngo1._id,
+        location: { type: 'Point', coordinates: [77.6000, 12.9800] }
+      },
+      {
+        description: 'Water contamination report near Alpha HQ',
+        category: 'Water',
+        urgencyScore: 3,
+        status: 'OPEN',
+        ngoId: ngo1._id,
+        location: { type: 'Point', coordinates: [77.5900, 12.9600] }
+      },
+      {
+        description: 'Debris removal needed on Main St',
+        category: 'Infrastructure',
+        urgencyScore: 2,
+        status: 'OPEN',
+        ngoId: ngo2._id,
+        location: { type: 'Point', coordinates: [72.8800, 19.0800] }
       }
     ]);
 
-    console.log('Successfully seeded surveys');
-
-    // 3. Seed Tasks
-    const dummyTasks = [
+    // 7. Create Surveys
+    await Survey.create([
       {
-        sourceSurveyId: surveys[0]._id,
-        category: 'Sanitation',
-        urgencyScore: 5,
-        description: 'Major drainage overflow near market area',
-        location: { type: 'Point', coordinates: [77.5946, 12.9716] },
-        status: 'OPEN'
-      },
-      {
-        category: 'Medical',
-        urgencyScore: 4,
-        description: 'Need for urgent medical supplies at community center',
-        location: { type: 'Point', coordinates: [77.5996, 12.9756] },
-        status: 'OPEN'
+        description: 'Handwritten survey: Power outage in Block B',
+        category: 'Power',
+        urgency: 3,
+        status: 'SUBMITTED',
+        fieldWorkerId: worker1._id,
+        ngoId: ngo1._id,
+        location: { type: 'Point', coordinates: [77.6100, 12.9900] }
       }
-    ];
+    ]);
 
-    await Task.insertMany(dummyTasks);
-    console.log('Successfully seeded tasks');
+    console.log('Tasks and Surveys seeded successfully.');
+    console.log('\n--- MULTI-NGO SEED COMPLETE ---');
+    console.log('NGO Alpha: Join Code [ALPHA1] | Admin: admin@alpha.org');
+    console.log('NGO Beta:  Join Code [BETA02] | Admin: admin@beta.org');
+    console.log('Common Password: password123');
     
     process.exit(0);
   } catch (error) {
-    console.error('Seeding error:', error);
+    console.error('Seed Error:', error);
     process.exit(1);
   }
-};
+}
 
-seedDB();
+seed();

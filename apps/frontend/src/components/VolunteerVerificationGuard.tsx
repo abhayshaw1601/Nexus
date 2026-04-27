@@ -10,7 +10,7 @@ import { FileUp, ShieldAlert, CheckCircle2 } from "lucide-react";
 export default function VolunteerVerificationGuard({ children }: { children: React.ReactNode }) {
   const { data: session, update } = useSession();
   const user = session?.user as any;
-  
+
   const [specialization, setSpecialization] = useState("General Labor");
   const [experienceBio, setExperienceBio] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -32,7 +32,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
       setError("Please upload an ID Proof");
       return;
     }
-    
+
     setIsLoading(true);
     setError("");
 
@@ -43,7 +43,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
 
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/volunteer/submit-details`, formData, {
-        headers: { 
+        headers: {
           "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${user.accessToken}`
         }
@@ -64,8 +64,8 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
         <div className="bg-card w-full max-w-lg rounded-2xl shadow-2xl border border-border overflow-hidden">
           <div className="bg-blue-600 p-6 text-white text-center relative">
-            <button 
-              onClick={() => signOut()} 
+            <button
+              onClick={() => signOut()}
               className="absolute top-4 right-4 text-white/80 hover:text-white text-sm font-bold bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition-colors"
             >
               Logout
@@ -74,7 +74,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
             <h2 className="text-2xl font-black">Volunteer Verification Required</h2>
             <p className="text-blue-100 mt-2 text-sm font-medium">Please provide your details to access the dashboard.</p>
           </div>
-          
+
           <form onSubmit={handleSubmitDetails} className="p-6 space-y-6">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-foreground">Specialization</label>
@@ -99,10 +99,10 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
                     {file ? file.name : "Click to upload ID Card or Certificate"}
                   </p>
                 </div>
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept="image/*,.pdf" 
+                <input
+                  type="file"
+                  className="hidden"
+                  accept="image/*,.pdf"
                   onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                 />
               </label>
@@ -110,7 +110,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
 
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-foreground">Experience / Bio</label>
-              <textarea 
+              <textarea
                 className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
                 placeholder="Briefly describe your experience..."
                 required
@@ -141,7 +141,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
           </div>
           <h2 className="text-3xl font-black text-foreground tracking-tight">Verification Pending</h2>
           <p className="text-muted-foreground font-medium text-lg leading-relaxed">
-            Your details have been submitted and are currently under review by an NGO Admin. 
+            Your details have been submitted and are currently under review by an NGO Admin.
             You will gain access to the dashboard once approved.
           </p>
           <div className="pt-4">
@@ -153,7 +153,7 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
       </div>
     );
   }
-  
+
   if (user.status === "rejected") {
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">

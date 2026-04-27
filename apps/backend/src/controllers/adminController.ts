@@ -3,8 +3,11 @@ import User from '../models/User';
 
 export const getPendingVolunteers = async (req: Request, res: Response) => {
   try {
-    const volunteers = await User.find({ role: 'VOLUNTEER', status: 'pending' })
-      .select('-password -__v');
+    const ngoId = (req as any).user?.ngoId;
+    if (!ngoId) return res.status(403).json({ message: 'Organization context missing' });
+
+    const volunteers = await User.find({ role: 'VOLUNTEER', status: 'pending', ngoId })
+      .select('-password');
     res.json(volunteers);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });

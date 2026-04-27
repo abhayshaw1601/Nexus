@@ -29,6 +29,4 @@ const NGOSchema: Schema = new Schema({
 }, { timestamps: true });
 
 NGOSchema.index({ location: '2dsphere' });
-NGOSchema.index({ joinCode: 1 });
-
 export default mongoose.model<INGO>('NGO', NGOSchema);
