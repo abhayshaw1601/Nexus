@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { LogOut, MapPin, ChevronDown, Filter, LayoutDashboard } from "lucide-react";
+import { MapPin, ChevronDown, Filter, LayoutDashboard } from "lucide-react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { useState } from "react";
@@ -123,7 +123,7 @@ export default function DashboardPage() {
         <Sidebar />
         <NotificationModal socket={socket} volunteerLocation={centerLocation} />
 
-      <main className="neo-main" style={{ flex:1, overflowY:'auto' as const, backgroundColor:'var(--bg)' }}>
+      <main className="neo-main" style={{ flex:1, backgroundColor:'var(--bg)' }}>
 
           {/* ── HEADER (Desktop Only) ── */}
           <header className="desktop-only" style={{ ...S.header, display: 'flex' }}>

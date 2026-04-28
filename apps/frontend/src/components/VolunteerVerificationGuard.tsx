@@ -136,8 +136,8 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">
         <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border p-8 text-center space-y-6">
-          <div className="w-20 h-20 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto">
-            <ClockIcon className="w-10 h-10 text-yellow-600 dark:text-yellow-500" />
+          <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto">
+            <ClockIcon className="w-10 h-10 text-yellow-600" />
           </div>
           <h2 className="text-3xl font-black text-foreground tracking-tight">Verification Pending</h2>
           <p className="text-muted-foreground font-medium text-lg leading-relaxed">
@@ -158,8 +158,8 @@ export default function VolunteerVerificationGuard({ children }: { children: Rea
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">
         <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-red-500/50 p-8 text-center space-y-6">
-          <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
-            <ShieldAlert className="w-10 h-10 text-red-600 dark:text-red-500" />
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+            <ShieldAlert className="w-10 h-10 text-red-600" />
           </div>
           <h2 className="text-3xl font-black text-foreground tracking-tight">Verification Rejected</h2>
           <p className="text-muted-foreground font-medium text-lg leading-relaxed">

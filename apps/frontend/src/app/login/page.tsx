@@ -40,7 +40,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 transition-colors duration-500">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8 transition-colors duration-500 relative">
+      <Link 
+        href="/" 
+        className="absolute top-8 left-8 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground transition-colors font-mono"
+      >
+        ← BACK TO HOME
+      </Link>
+
       <div className="w-full max-w-md space-y-12 neo-border bg-card p-12 rounded-[4px] transition-all duration-500">
         <div className="text-center space-y-6">
           <Heart className="mx-auto h-12 w-12 text-primary stroke-[1.5pt]" />

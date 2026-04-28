@@ -45,7 +45,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: { padding: '16px 32px', fontSize: '0.85rem' },
     };
 
-    const sOffset = shadowSize === 'lg' ? '6px' : '4px';
+    const sOffset = shadowSize === 'lg' ? '8px' : '6px';
 
     const base: React.CSSProperties = {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',

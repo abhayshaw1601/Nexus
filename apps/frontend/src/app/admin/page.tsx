@@ -110,9 +110,9 @@ export default function AdminPage() {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: BG }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: BG }}>
       <Sidebar />
-      <main className="neo-main" style={{ flex: 1, overflowY: 'auto', backgroundColor: BG }}>
+      <main className="neo-main" style={{ flex: 1, backgroundColor: BG }}>
         <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: `2.5px solid ${BLACK}`, paddingBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h1 style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '2.2rem', textTransform: 'uppercase', letterSpacing: '-0.04em', color: FG, margin: 0 }}>
