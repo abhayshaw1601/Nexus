@@ -9,10 +9,13 @@ import { UploadCloud, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import { useLanguage } from "@/components/LanguageContext";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 export default function NewSurveyPage() {
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const { currentLanguage } = useLanguage();
 
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -41,12 +44,13 @@ export default function NewSurveyPage() {
     setIsUploading(true); setStatus('idle');
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('language', currentLanguage.aiCode);
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${token}` }
       });
-      setStatus('success'); setMessage('Survey uploaded! AI is analyzing the document.');
-      setTimeout(() => router.push('/dashboard'), 3000);
+      setStatus('success'); setMessage('Survey uploaded! Redirecting to verification...');
+      setTimeout(() => router.push(`/surveys/verify/${res.data.survey._id}`), 1500);
     } catch (err: any) {
       console.error('[handleFileUpload] error:', err.response?.data || err.message);
       setStatus('error'); setMessage(err.response?.data?.message || err.message || 'Failed to upload survey.');
@@ -155,10 +159,10 @@ export default function NewSurveyPage() {
           </div>
 
           {/* Master Card Container */}
-          <div className="neo-card-full-deep" style={{ 
-            backgroundColor: 'white', 
-            border: '2px solid black', 
-            boxShadow: '8px 8px 0px 0px #000', 
+          <div className="neo-card-full-deep" style={{
+            backgroundColor: 'white',
+            border: '2px solid black',
+            boxShadow: '8px 8px 0px 0px #000',
             padding: '2.5rem',
             marginTop: '2rem'
           }}>
@@ -171,8 +175,8 @@ export default function NewSurveyPage() {
                   onClick={() => setActiveTab(tab)}
                   style={{ cursor: 'pointer' }}
                   className={`flex-1 py-5 text-[0.8rem] font-black uppercase tracking-[0.15em] transition-all border-none outline-none ${activeTab === tab
-                      ? 'bg-[#008080] text-white'
-                      : 'bg-white text-black hover:bg-[#F2EFE9]'
+                    ? 'bg-[#008080] text-white'
+                    : 'bg-white text-black hover:bg-[#F2EFE9]'
                     } ${idx === 0 ? 'border-r-[3px] border-black' : ''}`}
                 >
                   {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
@@ -199,6 +203,7 @@ export default function NewSurveyPage() {
                     <span className="text-[0.7rem] uppercase font-black tracking-widest">or drag and drop survey here</span>
                   </div>
                   <p className="font-body text-[0.7rem] font-bold text-black/40 uppercase tracking-wider">PNG, JPG, PDF up to 10MB</p>
+
                   {file && (
                     <div className="mt-8 p-3 bg-accent-success/10 border-2 border-accent-success inline-block">
                       <p className="font-body text-[0.8rem] font-black text-accent-success uppercase tracking-wider">
@@ -208,18 +213,35 @@ export default function NewSurveyPage() {
                   )}
                 </div>
 
-                <div className="flex justify-center pt-4">
-                  <Button
-                    type="submit"
-                    disabled={!file || isUploading}
-                    size="lg"
-                    shadowSize="lg"
-                    className="w-full h-16 text-lg border-[3px] border-black shadow-[4px_4px_0px_0px_#000]"
-                    isLoading={isUploading}
-                    style={{ backgroundColor: '#008080', color: 'white' }}
-                  >
-                    Initialize AI Processing
-                  </Button>
+                <div className="p-10 bg-[#F2EFE9]/50 border-[3px] border-black shadow-[8px_8px_0px_0px_#000] space-y-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
+                    <div className="space-y-3">
+                      <label className="text-[0.75rem] font-black uppercase tracking-[0.2em] text-black/60 block px-1">
+                        Select Document Language
+                      </label>
+                      <LanguageSelector />
+                    </div>
+                    <div className="space-y-3">
+                       <label className="text-[0.75rem] font-black uppercase tracking-[0.2em] text-black/60 block px-1 invisible md:visible">
+                        Action
+                      </label>
+                      <Button
+                        type="submit"
+                        disabled={!file || isUploading}
+                        size="lg"
+                        className="w-full h-[56px] text-[0.8rem] border-[3px] border-black shadow-[4px_4px_0px_0px_#000] font-black"
+                        isLoading={isUploading}
+                        style={{ backgroundColor: '#008080', color: 'white' }}
+                      >
+                        Initialize AI OCR Extraction
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t-2 border-black/5">
+                    <p className="text-[0.65rem] font-bold text-black/50 uppercase tracking-[0.15em] text-center leading-relaxed">
+                      AI will automatically detect layout and extract handwriting<br className="hidden md:block" /> based on the selected document language
+                    </p>
+                  </div>
                 </div>
               </form>
             )}
@@ -227,7 +249,7 @@ export default function NewSurveyPage() {
             {/* ─ Manual Entry Form ─ */}
             {activeTab === 'manual' && (
               <form onSubmit={handleManualSubmit} className="space-y-10">
-                
+
                 {/* Standardized Control Group: Category & Urgency */}
                 <div className="flex flex-col md:flex-row gap-8 justify-between">
                   <div className="flex-1 space-y-4">

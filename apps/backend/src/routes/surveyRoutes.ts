@@ -4,7 +4,8 @@ import {
   saveDraft, 
   submitSurvey, 
   getPendingSurveys, 
-  verifySurvey 
+  verifySurvey,
+  getSurveyById
 } from '../controllers/surveyController';
 import { upload } from '../utils/multer';
 import { auth, authorize } from '../middleware/authMiddleware';
@@ -18,6 +19,7 @@ router.post('/upload', auth, authorize('FIELD_WORKER', 'NGO_ADMIN', 'SUPER_ADMIN
 
 // NGO Admin routes
 router.get('/pending', auth, authorize('NGO_ADMIN'), getPendingSurveys);
+router.get('/:id', auth, getSurveyById);
 router.post('/verify', auth, authorize('NGO_ADMIN'), verifySurvey);
 
 export default router;

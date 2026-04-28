@@ -160,7 +160,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout — anchored at bottom */}
-      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}`, marginTop: 'auto' }}>
+      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}`, marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           onClick={() => signOut()}
           style={{ 
