@@ -175,7 +175,7 @@ export const uploadSurveyImage = async (req: Request, res: Response) => {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
-    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const imageUrl = (req.file as any).path; // Cloudinary URL from CloudinaryStorage
     res.status(200).json({ imageUrl });
   } catch (error) {
     res.status(500).json({ message: 'Error uploading image', error });
