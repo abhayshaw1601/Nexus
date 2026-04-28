@@ -11,10 +11,10 @@ import { auth, authorize } from '../middleware/authMiddleware';
 
 const router = Router();
 
-// Field Worker routes
-router.post('/save-draft', auth, authorize('FIELD_WORKER'), saveDraft);
-router.post('/submit', auth, authorize('FIELD_WORKER'), submitSurvey);
-router.post('/upload', auth, authorize('FIELD_WORKER'), upload.single('file'), uploadSurvey);
+// Field Worker & Admin routes
+router.post('/save-draft', auth, authorize('FIELD_WORKER', 'NGO_ADMIN', 'SUPER_ADMIN'), saveDraft);
+router.post('/submit', auth, authorize('FIELD_WORKER', 'NGO_ADMIN', 'SUPER_ADMIN'), submitSurvey);
+router.post('/upload', auth, authorize('FIELD_WORKER', 'NGO_ADMIN', 'SUPER_ADMIN'), upload.single('file'), uploadSurvey);
 
 // NGO Admin routes
 router.get('/pending', auth, authorize('NGO_ADMIN'), getPendingSurveys);

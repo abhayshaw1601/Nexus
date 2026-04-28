@@ -11,7 +11,7 @@ import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
 
 export default function NewSurveyPage() {
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
 
   const [file, setFile] = useState<File | null>(null);
@@ -23,6 +23,12 @@ export default function NewSurveyPage() {
   const [manualData, setManualData] = useState({ category: 'Sanitation', urgencyScore: '3', description: '', lat: '', lng: '' });
   const [surveyId, setSurveyId] = useState<string | null>(null);
 
+  const getToken = () => {
+    const token = (session?.user as any)?.accessToken;
+    if (!token) console.warn('[NewSurveyPage] accessToken is missing from session:', session);
+    return token;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
   };
@@ -30,55 +36,86 @@ export default function NewSurveyPage() {
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
+    const token = getToken();
+    if (!token) { setStatus('error'); setMessage('Session expired — please log out and log back in.'); return; }
     setIsUploading(true); setStatus('idle');
     const formData = new FormData();
     formData.append('file', file);
-    if (session?.user) formData.append('fieldWorkerId', (session.user as any).id);
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${(session?.user as any).accessToken}` }
+        headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${token}` }
       });
       setStatus('success'); setMessage('Survey uploaded! AI is analyzing the document.');
       setTimeout(() => router.push('/dashboard'), 3000);
     } catch (err: any) {
-      setStatus('error'); setMessage(err.response?.data?.message || 'Failed to upload survey.');
+      console.error('[handleFileUpload] error:', err.response?.data || err.message);
+      setStatus('error'); setMessage(err.response?.data?.message || err.message || 'Failed to upload survey.');
     } finally { setIsUploading(false); }
   };
 
   const handleSaveDraft = async () => {
-    if (!session?.user) return;
+    const token = getToken();
+    if (!token) { setStatus('error'); setMessage('Session expired — please log out and log back in.'); return; }
     setIsUploading(true);
+    setStatus('idle');
     try {
       const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
-        surveyId, category: manualData.category, urgency: Number(manualData.urgencyScore),
+        surveyId,
+        category: manualData.category,
+        urgency: Number(manualData.urgencyScore),
         description: manualData.description,
         location: { type: 'Point', coordinates: [Number(manualData.lng), Number(manualData.lat)] }
-      }, { headers: { Authorization: `Bearer ${(session.user as any).accessToken}` } });
+      }, { headers: { Authorization: `Bearer ${token}` } });
       setSurveyId(res.data.survey._id);
-      setStatus('success'); setMessage('Draft saved!');
-      setTimeout(() => setStatus('idle'), 2000);
-    } catch { setStatus('error'); setMessage('Failed to save draft.'); }
-    finally { setIsUploading(false); }
+      setStatus('success');
+      setMessage('Draft saved successfully!');
+      setTimeout(() => setStatus('idle'), 3000);
+    } catch (err: any) {
+      console.error('[handleSaveDraft] error:', err.response?.data || err.message);
+      setStatus('error');
+      setMessage(err.response?.data?.message || err.message || 'Failed to save draft.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user) return;
-    setIsUploading(true); setStatus('idle');
+    const token = getToken();
+    if (!token) { setStatus('error'); setMessage('Session expired — please log out and log back in.'); return; }
+    setIsUploading(true);
+    setStatus('idle');
     try {
+      // Step 1: Save (or update) draft
       const draftRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/save-draft`, {
-        surveyId, category: manualData.category, urgency: Number(manualData.urgencyScore),
+        surveyId,
+        category: manualData.category,
+        urgency: Number(manualData.urgencyScore),
         description: manualData.description,
         location: { type: 'Point', coordinates: [Number(manualData.lng), Number(manualData.lat)] }
-      }, { headers: { Authorization: `Bearer ${(session.user as any).accessToken}` } });
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
       const currentSurveyId = draftRes.data.survey._id;
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/submit`, { surveyId: currentSurveyId }, {
-        headers: { Authorization: `Bearer ${(session.user as any).accessToken}` }
-      });
-      setStatus('success'); setMessage('Survey submitted for verification!');
+      setSurveyId(currentSurveyId);
+
+      // Step 2: Submit the draft
+      const submitRes = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/submit`, {
+        surveyId: currentSurveyId
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      setStatus('success');
+      setMessage(submitRes.data.autoVerified
+        ? 'Task created! It is now live on the dashboard.'
+        : 'Survey submitted for admin verification.'
+      );
       setTimeout(() => router.push('/dashboard'), 2000);
-    } catch { setStatus('error'); setMessage('Failed to submit survey.'); }
-    finally { setIsUploading(false); }
+    } catch (err: any) {
+      console.error('[handleManualSubmit] error:', err.response?.data || err.message);
+      setStatus('error');
+      setMessage(err.response?.data?.message || err.message || 'Failed to submit survey.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleGetCurrentLocation = () => {
@@ -285,27 +322,32 @@ export default function NewSurveyPage() {
               </form>
             )}
 
-            {/* Status Feedback Zone */}
-            <div className="space-y-6 pt-4">
-              {status === 'success' && (
-                <div className="p-6 bg-accent-success border-[3px] border-black shadow-[6px_6px_0px_0px_#000] flex items-center gap-4">
-                  <CheckCircle2 className="w-8 h-8 text-white" />
-                  <div className="space-y-1">
-                    <p className="text-[0.7rem] font-black text-white uppercase tracking-[0.2em]">Success</p>
-                    <p className="font-body text-[0.9rem] font-black text-white uppercase tracking-wider">{message}</p>
-                  </div>
+            {/* Status Feedback Zone — always inline below form */}
+            {status !== 'idle' && (
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1.25rem 1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem',
+                border: '3px solid #000',
+                boxShadow: '6px 6px 0px 0px #000',
+                backgroundColor: status === 'success' ? 'var(--accent-success)' : 'var(--accent-critical)',
+              }}>
+                {status === 'success'
+                  ? <CheckCircle2 style={{ width: 28, height: 28, color: '#fff', flexShrink: 0 }} />
+                  : <AlertCircle style={{ width: 28, height: 28, color: '#fff', flexShrink: 0 }} />
+                }
+                <div>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#fff', margin: 0 }}>
+                    {status === 'success' ? 'Success' : 'Error'}
+                  </p>
+                  <p style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.8rem', color: '#fff', margin: '4px 0 0' }}>
+                    {message}
+                  </p>
                 </div>
-              )}
-              {status === 'error' && (
-                <div className="p-6 bg-accent-critical border-[3px] border-black shadow-[6px_6px_0px_0px_#000] flex items-center gap-4">
-                  <AlertCircle className="w-8 h-8 text-white" />
-                  <div className="space-y-1">
-                    <p className="text-[0.7rem] font-black text-white uppercase tracking-[0.2em]">Critical Error</p>
-                    <p className="font-body text-[0.9rem] font-black text-white uppercase tracking-wider">{message}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

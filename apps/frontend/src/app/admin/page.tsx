@@ -45,7 +45,9 @@ export default function AdminPage() {
       ]);
       setTasks(tasksRes.data);
       setUsers(usersRes.data);
-    } catch { console.error("Failed to fetch admin data"); }
+    } catch (error) { 
+      console.error("Failed to fetch admin data:", error); 
+    }
   };
 
   const handleVerify = async (taskId: string) => {

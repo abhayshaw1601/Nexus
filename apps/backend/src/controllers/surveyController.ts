@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import Survey from '../models/Survey';
 import Task from '../models/Task';
 import axios from 'axios';
@@ -7,12 +8,17 @@ import FormData from 'form-data';
 
 export const saveDraft = async (req: Request, res: Response) => {
   try {
-    const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
-    const ngoId = (req as any).user?.ngoId;
+    const user = (req as any).user;
+    const fieldWorkerId = user?._id || user?.id;
+    const ngoId = user?.ngoId;
     const { surveyId, description, category, urgency, location } = req.body;
 
+    if (!fieldWorkerId) {
+      return res.status(401).json({ message: 'User not authenticated or ID missing' });
+    }
+
     let survey;
-    if (surveyId) {
+    if (surveyId && mongoose.isValidObjectId(surveyId)) {
       survey = await Survey.findOneAndUpdate(
         { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
         { description, category, urgency, location, ngoId },
@@ -34,16 +40,22 @@ export const saveDraft = async (req: Request, res: Response) => {
     }
 
     res.status(200).json({ message: 'Draft saved successfully', survey });
-  } catch (error) {
-    res.status(500).json({ message: 'Error saving draft', error });
+  } catch (error: any) {
+    console.error('Error in saveDraft:', error);
+    res.status(500).json({ message: 'Error saving draft', error: error.message });
   }
 };
 
 export const submitSurvey = async (req: Request, res: Response) => {
   try {
-    const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
-    const ngoId = (req as any).user?.ngoId;
+    const user = (req as any).user;
+    const fieldWorkerId = user?._id || user?.id;
+    const ngoId = user?.ngoId;
     const { surveyId } = req.body;
+
+    if (!surveyId || !mongoose.isValidObjectId(surveyId)) {
+      return res.status(400).json({ message: 'Valid Survey ID is required' });
+    }
 
     const survey = await Survey.findOneAndUpdate(
       { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
@@ -52,12 +64,37 @@ export const submitSurvey = async (req: Request, res: Response) => {
     );
 
     if (!survey) {
-      return res.status(404).json({ message: 'Draft not found' });
+      return res.status(404).json({ message: 'Draft not found or already submitted' });
     }
 
-    res.status(200).json({ message: 'Survey submitted successfully', survey });
-  } catch (error) {
-    res.status(500).json({ message: 'Error submitting survey', error });
+    // NGO_ADMIN submissions are auto-verified → immediately create a Task
+    if (user.role === 'NGO_ADMIN' || user.role === 'SUPER_ADMIN') {
+      survey.status = 'VERIFIED';
+      await survey.save();
+
+      const task = new Task({
+        sourceSurveyId: survey._id,
+        category: survey.category || 'Uncategorized',
+        urgencyScore: survey.urgency || 3,
+        description: survey.description || 'No description provided',
+        location: survey.location || { type: 'Point', coordinates: [0, 0] },
+        ngoId: ngoId || survey.ngoId,
+        status: 'OPEN',
+      });
+      await task.save();
+
+      return res.status(200).json({
+        message: 'Survey submitted and task created successfully',
+        survey,
+        task,
+        autoVerified: true,
+      });
+    }
+
+    res.status(200).json({ message: 'Survey submitted for verification', survey });
+  } catch (error: any) {
+    console.error('Error in submitSurvey:', error);
+    res.status(500).json({ message: 'Error submitting survey', error: error.message });
   }
 };
 
@@ -113,8 +150,9 @@ export const uploadSurvey = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const fieldWorkerId = (req as any).user?.id || req.body.fieldWorkerId;
-    const ngoId = (req as any).user?.ngoId;
+    const user = (req as any).user;
+    const fieldWorkerId = user?._id || user?.id || req.body.fieldWorkerId;
+    const ngoId = user?.ngoId;
     
     // Create survey record
     const survey = new Survey({
