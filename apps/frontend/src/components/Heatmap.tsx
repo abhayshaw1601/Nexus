@@ -362,7 +362,7 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
       <div ref={mapRef} className="absolute inset-0 h-full w-full" />
       
       {/* Legend & Controls */}
-      <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-xl border border-border z-[1000] min-w-[160px] flex flex-col gap-4 transition-colors duration-300">
+      <div className="absolute top-4 right-4 bg-card p-4 rounded-lg shadow-xl border border-border z-[1000] min-w-[160px] flex flex-col gap-4">
         <div>
           <div className="flex justify-between mb-2 px-0.5">
             {[1, 2, 3, 4, 5].map(num => (

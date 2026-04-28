@@ -12,6 +12,7 @@ export interface ITask extends Document {
   ngoId: mongoose.Types.ObjectId;
   status: 'OPEN' | 'ASSIGNED' | 'COMPLETED' | 'VERIFIED';
   assignedVolunteerId?: mongoose.Types.ObjectId;
+  imageUrls?: string[];
   proofData?: {
     imageUrl: string;
     coordinates: number[];
@@ -36,6 +37,7 @@ const TaskSchema: Schema = new Schema({
     default: 'OPEN' 
   },
   assignedVolunteerId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  imageUrls: [{ type: String }],
   proofData: {
     imageUrl: String,
     coordinates: [Number],

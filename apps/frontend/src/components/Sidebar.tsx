@@ -44,7 +44,7 @@ export default function Sidebar() {
     color: isActive(path) ? '#FFFFFF' : FG,
     backgroundColor: isActive(path) ? PUR : 'transparent',
     border: `2px solid ${isActive(path) ? BLACK : 'transparent'}`,
-    boxShadow: isActive(path) ? `4px 4px 0px ${WHITE}` : 'none',
+    boxShadow: isActive(path) ? `8px 8px 0px ${WHITE}` : 'none',
     transform: isActive(path) ? 'translate(-2px,-2px)' : 'none',
     textDecoration: 'none', transition: 'all 0.15s ease',
     cursor: 'pointer', minHeight: 48,
@@ -170,7 +170,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout — anchored at bottom */}
-      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}`, marginTop: 'auto' }}>
+      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}`, marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           onClick={() => signOut()}
           style={{ 

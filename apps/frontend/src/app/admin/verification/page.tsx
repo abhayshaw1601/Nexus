@@ -25,6 +25,7 @@ export default function VerificationQueuePage() {
   const [completionReports, setCompletionReports] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'surveys' | 'completions'>('surveys');
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function VerificationQueuePage() {
   };
 
   if (loading) {
-    return <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: BG }}>
+    return <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: BG }}>
       <div style={{ width: 40, height: 40, border: `3px solid ${BLACK}`, borderTopColor: PUR, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
     </div>;
   }
@@ -335,6 +336,56 @@ export default function VerificationQueuePage() {
           })}
         </div>
       </main>
+
+      {/* Image Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {/* Close */}
+          <button
+            onClick={() => setLightbox(null)}
+            style={{ position: 'absolute', top: 20, right: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <X style={{ width: 18, height: 18 }} />
+          </button>
+
+          {/* Prev */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index - 1 + l.images.length) % l.images.length } : null); }}
+              style={{ position: 'absolute', left: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+
+          {/* Image */}
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '80vw', maxHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`Image ${lightbox.index + 1}`}
+              style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', border: `3px solid #fff` }}
+            />
+            {lightbox.images.length > 1 && (
+              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: '#fff' }}>
+                {lightbox.index + 1} / {lightbox.images.length}
+              </span>
+            )}
+          </div>
+
+          {/* Next */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index + 1) % l.images.length } : null); }}
+              style={{ position: 'absolute', right: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

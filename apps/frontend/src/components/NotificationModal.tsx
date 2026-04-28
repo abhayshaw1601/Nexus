@@ -112,7 +112,7 @@ export default function NotificationModal({ socket, volunteerLocation }: Notific
           </div>
           
           {distance && (
-            <div className="flex items-center text-blue-600 font-bold bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center text-blue-600 font-bold bg-blue-50 p-3 rounded-lg border border-blue-200">
               <MapPin className="w-5 h-5 mr-2" />
               <span>{distance} km away from your location</span>
             </div>
