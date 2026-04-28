@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, PlusCircle, Users, CheckCircle, Heart, Menu, X, LogOut } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Users, CheckCircle, Heart, Menu, X, LogOut, ClipboardList } from "lucide-react";
 import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 
@@ -155,6 +155,16 @@ export default function Sidebar() {
           >
             <Users style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
             Organization
+          </Link>
+        )}
+
+        {user.role === 'VOLUNTEER' && (
+          <Link href="/volunteer/reports" style={linkStyle('/volunteer/reports')}
+            onMouseEnter={(e: any) => handleHover(e, '/volunteer/reports', true)}
+            onMouseLeave={(e: any) => handleHover(e, '/volunteer/reports', false)}
+          >
+            <ClipboardList style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5 }} />
+            Submitted Reports
           </Link>
         )}
       </nav>

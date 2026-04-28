@@ -16,6 +16,7 @@ import workerRoutes from './routes/workerRoutes';
 import ngoRoutes from './routes/ngoRoutes';
 import volunteerRoutes from './routes/volunteerRoutes';
 import adminRoutes from './routes/adminRoutes';
+import completionReportRoutes from './routes/completionReportRoutes';
 
 import { Server } from 'socket.io';
 import http from 'http';
@@ -82,6 +83,7 @@ app.use('/api/worker', workerRoutes);
 app.use('/api/ngo', ngoRoutes);
 app.use('/api/volunteer', volunteerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/completion-reports', completionReportRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'NexusImpact Backend API is running' });

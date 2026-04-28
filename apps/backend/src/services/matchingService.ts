@@ -4,9 +4,16 @@ import { Server } from 'socket.io';
 
 export const findMatchingVolunteers = async (task: ITask, io: Server) => {
   try {
+    // Find volunteers that match ALL criteria:
+    // 1. Assigned to the same organization (ngoId)
+    // 2. Have matching skills (category matches their skills array)
+    // 3. Within 5km radius of the task location
+    // 4. Are verified volunteers
     const volunteers = await User.find({
       role: 'VOLUNTEER',
-      skills: task.category,
+      ngoId: task.ngoId, // Only volunteers from the same organization
+      isVerified: true,
+      skills: task.category, // Skill must match the task category (e.g., Medical, Sanitation)
       location: {
         $near: {
           $geometry: task.location,
@@ -15,7 +22,7 @@ export const findMatchingVolunteers = async (task: ITask, io: Server) => {
       }
     });
 
-    console.log(`Found ${volunteers.length} potential volunteers for task: ${task._id}`);
+    console.log(`Found ${volunteers.length} potential volunteers with matching skills (${task.category}) for task: ${task._id}`);
 
     volunteers.forEach(volunteer => {
       // Notify the volunteer via socket if they are online
@@ -26,6 +33,7 @@ export const findMatchingVolunteers = async (task: ITask, io: Server) => {
         urgency: task.urgencyScore,
         description: task.description
       });
+      console.log(`Notified volunteer: ${volunteer.name} (${volunteer._id}) - Skills: ${volunteer.skills.join(', ')}`);
     });
 
     return volunteers;

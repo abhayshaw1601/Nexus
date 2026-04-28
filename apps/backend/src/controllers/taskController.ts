@@ -11,7 +11,7 @@ export const getTasks = async (req: Request, res: Response) => {
     }
     const query: any = { status: { $ne: 'VERIFIED' }, ngoId };
 
-    const tasks = await Task.find(query);
+    const tasks = await Task.find(query).populate('assignedVolunteerId', 'name email');
 
     // Simple Privacy Geofencing: 
     // If not admin, add slight random offset to coordinates (approx 100m)
@@ -34,6 +34,21 @@ export const getTasks = async (req: Request, res: Response) => {
     });
 
     res.json(safeTasks);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const getTaskById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const task = await Task.findById(id).populate('assignedVolunteerId', 'name email');
+    
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    res.json(task);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -74,12 +89,14 @@ export const createTaskFromSurvey = async (req: Request, res: Response) => {
     await findMatchingVolunteers(task, io);
 
     // Trigger the new proximity-based crisis alerts for On-Duty volunteers
+    // Only notifies volunteers from the same organization with matching skills
     await notifyNearbyVolunteers(io, {
       id: task._id.toString(),
       name: task.description || 'New Crisis',
       category: task.category,
       urgencyScore: task.urgencyScore,
-      coordinates: task.location.coordinates as [number, number]
+      coordinates: task.location.coordinates as [number, number],
+      ngoId: task.ngoId // Pass the organization ID for filtering
     });
 
     res.status(201).json(task);
@@ -92,6 +109,19 @@ export const acceptTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const volunteerId = (req as any).user?.id || req.body.volunteerId;
+
+    // Check if volunteer already has an active (ASSIGNED) task
+    const activeTask = await Task.findOne({
+      assignedVolunteerId: volunteerId,
+      status: 'ASSIGNED'
+    });
+
+    if (activeTask) {
+      return res.status(400).json({ 
+        message: 'You already have an active task. Please complete it before accepting a new one.',
+        activeTaskId: activeTask._id
+      });
+    }
 
     const task = await Task.findById(id);
     if (!task || task.status !== 'OPEN') {
@@ -111,39 +141,57 @@ export const acceptTask = async (req: Request, res: Response) => {
 export const completeTask = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { coordinates } = req.body; // [lng, lat] from volunteer's device
+    const volunteerId = (req as any).user?.id;
+    const ngoId = (req as any).user?.ngoId;
+
+    // Support both JSON and multipart/form-data
+    const body = req.body;
+    const title = body.title;
+    const category = body.category;
+    const urgencyScore = Number(body.urgencyScore);
+    const affectedPeople = Number(body.affectedPeople) || 0;
+    const description = body.description;
+    const coordinates = typeof body.coordinates === 'string' 
+      ? JSON.parse(body.coordinates) 
+      : body.coordinates;
 
     const task = await Task.findById(id);
-    if (!task || !req.file) {
-      return res.status(400).json({ message: 'Invalid request' });
+    if (!task) {
+      return res.status(404).json({ message: 'Task not found' });
     }
 
-    // Distance validation (simple Haversine or approximation)
-    const [taskLng, taskLat] = task.location.coordinates;
-    const [proofLng, proofLat] = coordinates;
-
-    const distance = Math.sqrt(
-      Math.pow(taskLng - proofLng, 2) + Math.pow(taskLat - proofLat, 2)
-    );
-
-    // Approx 0.001 degree is ~110 meters
-    if (distance > 0.001) {
-      return res.status(400).json({
-        message: 'You must be at the task location to submit proof',
-        distance_detected: distance
-      });
+    if (task.assignedVolunteerId?.toString() !== volunteerId) {
+      return res.status(403).json({ message: 'You can only complete tasks assigned to you' });
     }
+
+    // Collect Cloudinary image URLs (multer-storage-cloudinary puts secure_url in file.path)
+    const files = (req as any).files as Express.Multer.File[] | undefined;
+    const imageUrls = files ? files.map(f => (f as any).path) : [];
+
+    const CompletionReport = (await import('../models/CompletionReport')).default;
+    const report = new CompletionReport({
+      taskId: task._id,
+      volunteerId,
+      ngoId: task.ngoId,
+      title,
+      category,
+      urgencyScore,
+      affectedPeople,
+      description,
+      location: { type: 'Point', coordinates },
+      proofImageUrls: imageUrls,
+      status: 'PENDING'
+    });
+
+    await report.save();
 
     task.status = 'COMPLETED';
-    task.proofData = {
-      imageUrl: req.file.path,
-      coordinates,
-      timestamp: new Date()
-    };
-
+    task.proofData = { imageUrl: imageUrls[0] || '', coordinates, timestamp: new Date() };
     await task.save();
-    res.json(task);
+
+    res.json({ message: 'Task marked as completed. Report submitted for verification.', task, report });
   } catch (error) {
+    console.error('Error completing task:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
@@ -155,14 +203,14 @@ export const getAllTasks = async (req: Request, res: Response) => {
 
     // Super admins see everything
     if (user.role === 'SUPER_ADMIN') {
-      const tasks = await Task.find({}).sort({ createdAt: -1 });
+      const tasks = await Task.find({}).populate('assignedVolunteerId', 'name email').sort({ createdAt: -1 });
       return res.json(tasks);
     }
 
     const ngoId = user.ngoId;
     if (!ngoId) return res.status(403).json({ message: 'Organization context missing' });
 
-    const tasks = await Task.find({ ngoId }).sort({ createdAt: -1 });
+    const tasks = await Task.find({ ngoId }).populate('assignedVolunteerId', 'name email').sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });

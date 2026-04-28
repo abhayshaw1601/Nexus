@@ -2,8 +2,6 @@ import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
 
-// Cloudinary will automatically pick up the CLOUDINARY_URL environment variable if set.
-// Otherwise, make sure to set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in .env
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -12,7 +10,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
   });
 }
 
-const storage = new CloudinaryStorage({
+const idProofStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'nexus_id_proofs',
@@ -20,4 +18,14 @@ const storage = new CloudinaryStorage({
   } as any,
 });
 
-export const uploadIdProof = multer({ storage: storage });
+export const uploadIdProof = multer({ storage: idProofStorage });
+
+const completionReportStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'nexus_completion_reports',
+    allowed_formats: ['jpg', 'jpeg', 'png'],
+  } as any,
+});
+
+export const uploadCompletionImages = multer({ storage: completionReportStorage, limits: { fileSize: 10 * 1024 * 1024 } });
