@@ -4,9 +4,11 @@ export interface ISurvey extends Document {
   fieldWorkerId: mongoose.Types.ObjectId;
   rawImageUrl?: string;
   status: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
+  title?: string;
   description?: string;
   category?: string;
   urgency?: number;
+  affectedPeople?: number;
   location?: {
     type: 'Point';
     coordinates: number[];
@@ -30,9 +32,11 @@ const SurveySchema: Schema = new Schema({
     enum: ['DRAFT', 'SUBMITTED', 'VERIFIED', 'REJECTED'], 
     default: 'DRAFT' 
   },
+  title: String,
   description: String,
   category: String,
   urgency: Number,
+  affectedPeople: Number,
   location: {
     type: { type: String, enum: ['Point'], default: 'Point' },
     coordinates: { type: [Number] }

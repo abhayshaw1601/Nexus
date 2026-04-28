@@ -11,7 +11,7 @@ export const saveDraft = async (req: Request, res: Response) => {
     const user = (req as any).user;
     const fieldWorkerId = user?._id || user?.id;
     const ngoId = user?.ngoId;
-    const { surveyId, description, category, urgency, location } = req.body;
+    const { surveyId, title, description, category, urgency, affectedPeople, location } = req.body;
 
     if (!fieldWorkerId) {
       return res.status(401).json({ message: 'User not authenticated or ID missing' });
@@ -21,7 +21,7 @@ export const saveDraft = async (req: Request, res: Response) => {
     if (surveyId && mongoose.isValidObjectId(surveyId)) {
       survey = await Survey.findOneAndUpdate(
         { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
-        { description, category, urgency, location, ngoId },
+        { title, description, category, urgency, affectedPeople, location, ngoId },
         { new: true }
       );
     }
@@ -30,9 +30,11 @@ export const saveDraft = async (req: Request, res: Response) => {
       survey = new Survey({
         fieldWorkerId,
         ngoId,
+        title,
         description,
         category,
         urgency,
+        affectedPeople,
         location,
         status: 'DRAFT'
       });
@@ -141,6 +143,17 @@ export const verifySurvey = async (req: Request, res: Response) => {
     res.status(200).json({ message: `Survey ${action.toLowerCase()} successfully`, survey });
   } catch (error) {
     res.status(500).json({ message: 'Error verifying survey', error });
+  }
+};
+
+export const getMySurveys = async (req: Request, res: Response) => {
+  try {
+    const user = (req as any).user;
+    const fieldWorkerId = user?._id || user?.id;
+    const surveys = await Survey.find({ fieldWorkerId }).sort({ createdAt: -1 });
+    res.status(200).json(surveys);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching surveys', error });
   }
 };
 
