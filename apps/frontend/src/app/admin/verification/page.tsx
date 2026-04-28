@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { CheckCircle, XCircle, Clock, MapPin, User } from "lucide-react";
+import { CheckCircle, XCircle, Clock, MapPin, User, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import Sidebar from "@/components/Sidebar";
 
@@ -23,6 +22,7 @@ export default function VerificationQueuePage() {
   const { data: session, status } = useSession();
   const [surveys, setSurveys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -155,15 +155,25 @@ export default function VerificationQueuePage() {
               </div>
 
               {/* Right 30%: Action Section - BUTTONS ANCHORED TO BOTTOM */}
-              <div style={{ 
-                flex: 0.3, 
-                display: 'flex', 
-                flexDirection: 'column', 
-                justifyContent: 'flex-end', 
-                borderLeft: `2px solid rgba(0,0,0,0.1)`, 
-                paddingLeft: '20px' 
+              <div style={{
+                flex: 0.3,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-end',
+                borderLeft: `2px solid rgba(0,0,0,0.1)`,
+                paddingLeft: '20px'
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%' }}>
+                  {survey.imageUrls?.length > 0 && (
+                    <button
+                      onClick={() => setLightbox({ images: survey.imageUrls, index: 0 })}
+                      style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000', border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0px ${WHITE}`, padding: '14px 0', cursor: 'pointer', transition: 'all 0.1s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                      onMouseDown={(e) => { e.currentTarget.style.transform = 'translate(2px, 2px)'; e.currentTarget.style.boxShadow = '0px 0px 0px #000'; }}
+                      onMouseUp={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = `4px 4px 0px ${WHITE}`; }}
+                    >
+                      <Images style={{ width: 16, height: 16 }} /> View Images ({survey.imageUrls.length})
+                    </button>
+                  )}
                   <button
                     onClick={() => handleVerify(survey._id, 'VERIFIED')}
                     style={{ 
@@ -220,6 +230,56 @@ export default function VerificationQueuePage() {
           ))}
         </div>
       </main>
+
+      {/* Image Lightbox */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {/* Close */}
+          <button
+            onClick={() => setLightbox(null)}
+            style={{ position: 'absolute', top: 20, right: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <X style={{ width: 18, height: 18 }} />
+          </button>
+
+          {/* Prev */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index - 1 + l.images.length) % l.images.length } : null); }}
+              style={{ position: 'absolute', left: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+
+          {/* Image */}
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '80vw', maxHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`Image ${lightbox.index + 1}`}
+              style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', border: `3px solid #fff` }}
+            />
+            {lightbox.images.length > 1 && (
+              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: '#fff' }}>
+                {lightbox.index + 1} / {lightbox.images.length}
+              </span>
+            )}
+          </div>
+
+          {/* Next */}
+          {lightbox.images.length > 1 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index + 1) % l.images.length } : null); }}
+              style={{ position: 'absolute', right: 20, backgroundColor: 'transparent', border: `2px solid #fff`, color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ export const saveDraft = async (req: Request, res: Response) => {
     const user = (req as any).user;
     const fieldWorkerId = user?._id || user?.id;
     const ngoId = user?.ngoId;
-    const { surveyId, title, description, category, urgency, affectedPeople, location } = req.body;
+    const { surveyId, title, description, category, urgency, affectedPeople, location, imageUrls } = req.body;
 
     if (!fieldWorkerId) {
       return res.status(401).json({ message: 'User not authenticated or ID missing' });
@@ -21,7 +21,7 @@ export const saveDraft = async (req: Request, res: Response) => {
     if (surveyId && mongoose.isValidObjectId(surveyId)) {
       survey = await Survey.findOneAndUpdate(
         { _id: surveyId, fieldWorkerId, status: 'DRAFT' },
-        { title, description, category, urgency, affectedPeople, location, ngoId },
+        { title, description, category, urgency, affectedPeople, location, imageUrls, ngoId },
         { new: true }
       );
     }
@@ -36,6 +36,7 @@ export const saveDraft = async (req: Request, res: Response) => {
         urgency,
         affectedPeople,
         location,
+        imageUrls: imageUrls || [],
         status: 'DRAFT'
       });
       await survey.save();
@@ -81,6 +82,7 @@ export const submitSurvey = async (req: Request, res: Response) => {
         description: survey.description || 'No description provided',
         location: survey.location || { type: 'Point', coordinates: [0, 0] },
         ngoId: ngoId || survey.ngoId,
+        imageUrls: survey.imageUrls || [],
         status: 'OPEN',
       });
       await task.save();
@@ -135,6 +137,7 @@ export const verifySurvey = async (req: Request, res: Response) => {
         description: survey.description || 'No description provided',
         location: survey.location || { type: 'Point', coordinates: [0, 0] },
         ngoId: ngoId || survey.ngoId,
+        imageUrls: survey.imageUrls || [],
         status: 'OPEN'
       });
       await task.save();
@@ -143,6 +146,18 @@ export const verifySurvey = async (req: Request, res: Response) => {
     res.status(200).json({ message: `Survey ${action.toLowerCase()} successfully`, survey });
   } catch (error) {
     res.status(500).json({ message: 'Error verifying survey', error });
+  }
+};
+
+export const uploadSurveyImage = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.status(200).json({ imageUrl });
+  } catch (error) {
+    res.status(500).json({ message: 'Error uploading image', error });
   }
 };
 

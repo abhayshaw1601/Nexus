@@ -5,6 +5,7 @@ export interface ISurvey extends Document {
   rawImageUrl?: string;
   status: 'DRAFT' | 'SUBMITTED' | 'VERIFIED' | 'REJECTED';
   title?: string;
+  imageUrls?: string[];
   description?: string;
   category?: string;
   urgency?: number;
@@ -33,6 +34,7 @@ const SurveySchema: Schema = new Schema({
     default: 'DRAFT' 
   },
   title: String,
+  imageUrls: [{ type: String }],
   description: String,
   category: String,
   urgency: Number,

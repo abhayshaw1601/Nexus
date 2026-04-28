@@ -3,6 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
+import fs from 'fs';
+import path from 'path';
+
+fs.mkdirSync('uploads', { recursive: true });
 
 import authRoutes from './routes/authRoutes';
 import surveyRoutes from './routes/surveyRoutes';
@@ -29,6 +33,10 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(process.cwd(), 'uploads')));
 
 // Attach io to request for use in controllers
 app.use((req, res, next) => {

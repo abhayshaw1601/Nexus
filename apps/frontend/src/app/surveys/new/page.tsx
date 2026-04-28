@@ -60,6 +60,8 @@ export default function NewSurveyPage() {
   const [showForm, setShowForm]           = useState(false);
   const [surveyId, setSurveyId]           = useState<string | null>(null);
   const [manualData, setManualData]       = useState(emptyManual);
+  const [imageUrls, setImageUrls]         = useState<string[]>([]);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const token = (session?.user as any)?.accessToken;
 
@@ -78,10 +80,29 @@ export default function NewSurveyPage() {
     finally { setLoadingReports(false); }
   };
 
-  const resetForm = () => { setManualData(emptyManual); setSurveyId(null); };
+  const resetForm = () => { setManualData(emptyManual); setSurveyId(null); setImageUrls([]); };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !token) return;
+    setUploadingImage(true);
+    try {
+      const uploads = await Promise.all(files.map(async (f) => {
+        const fd = new FormData();
+        fd.append('image', f);
+        const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/surveys/upload-image`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+        });
+        return res.data.imageUrl as string;
+      }));
+      setImageUrls(prev => [...prev, ...uploads]);
+    } catch { alert('Failed to upload one or more images.'); }
+    finally { setUploadingImage(false); e.target.value = ''; }
+  };
 
   const openEdit = (report: any) => {
     setSurveyId(report._id);
+    setImageUrls(report.imageUrls || []);
     setManualData({
       title:          report.title || '',
       category:       report.category || 'Sanitation',
@@ -102,6 +123,7 @@ export default function NewSurveyPage() {
     affectedPeople: manualData.affectedPeople ? Number(manualData.affectedPeople) : undefined,
     description:    manualData.description,
     location: { type: 'Point', coordinates: [Number(manualData.lng), Number(manualData.lat)] },
+    imageUrls,
   });
 
   const handleSaveDraft = async () => {
@@ -278,6 +300,7 @@ export default function NewSurveyPage() {
                                 {report.category && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.category}</span>}
                                 {report.urgency && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>Urgency {report.urgency}/5</span>}
                                 {report.affectedPeople != null && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>~{report.affectedPeople} affected</span>}
+                                {report.imageUrls?.length > 0 && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.imageUrls.length} image{report.imageUrls.length !== 1 ? 's' : ''}</span>}
                                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{new Date(report.createdAt).toLocaleDateString()}</span>
                               </div>
                             </div>
@@ -356,6 +379,31 @@ export default function NewSurveyPage() {
                     <textarea required style={{ ...inp, minHeight: 120, resize: 'vertical' }}
                       value={manualData.description} onChange={e => setManualData(d => ({ ...d, description: e.target.value }))}
                       placeholder="Describe the community need..." />
+                  </div>
+
+                  {/* Image Upload */}
+                  <div>
+                    {lbl('Images (optional)')}
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: uploadingImage ? 'not-allowed' : 'pointer', backgroundColor: 'var(--bg)', border: `2.5px dashed ${BLACK}`, padding: '14px 20px', opacity: uploadingImage ? 0.6 : 1 }}>
+                      <UploadCloud style={{ width: 18, height: 18, color: 'var(--muted-fg)', flexShrink: 0 }} />
+                      <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>
+                        {uploadingImage ? 'Uploading...' : 'Click to add images (JPG, PNG)'}
+                      </span>
+                      <input type="file" accept="image/jpeg,image/jpg,image/png" multiple style={{ display: 'none' }} disabled={uploadingImage} onChange={handleImageUpload} />
+                    </label>
+                    {imageUrls.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+                        {imageUrls.map((url, i) => (
+                          <div key={i} style={{ position: 'relative', width: 90, height: 90, border: `2px solid ${BLACK}`, flexShrink: 0 }}>
+                            <img src={url} alt={`upload-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                            <button type="button" onClick={() => setImageUrls(prev => prev.filter((_, idx) => idx !== i))}
+                              style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, backgroundColor: CRIT, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div style={{ display: 'flex', gap: '1.5rem' }}>

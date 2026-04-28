@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { LogOut, MapPin, ChevronDown, Filter, LayoutDashboard, CheckCircle2, Navigation } from "lucide-react";
+import { LogOut, MapPin, ChevronDown, Filter, LayoutDashboard, CheckCircle2, Navigation, Images, X, ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import axios from "axios";
 import { io, Socket } from "socket.io-client";
@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [isOnDuty, setIsOnDuty] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -394,8 +395,7 @@ export default function DashboardPage() {
                           <span style={statusStyle(task.status)}>{task.status}</span>
                         </td>
                         <td style={{ ...S.td, borderRight: 'none' }}>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            {/* Volunteer: Accept OPEN tasks */}
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                             {user.role === 'VOLUNTEER' && task.status === 'OPEN' && (
                               <button
                                 onClick={() => handleAcceptTask(task._id)}
@@ -405,7 +405,6 @@ export default function DashboardPage() {
                                 <CheckCircle2 style={{ width:12, height:12 }} /> Accept
                               </button>
                             )}
-                            {/* All roles: Locate task on map */}
                             <button
                               onClick={() => handleLocateTask(task)}
                               title="Locate on map"
@@ -413,6 +412,15 @@ export default function DashboardPage() {
                             >
                               <Navigation style={{ width:12, height:12 }} /> Locate
                             </button>
+                            {task.imageUrls?.length > 0 && (
+                              <button
+                                onClick={() => setLightbox({ images: task.imageUrls, index: 0 })}
+                                title="View images"
+                                style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.55rem', textTransform:'uppercase', letterSpacing:'0.1em', padding:'4px 10px', backgroundColor:'var(--bg)', color:'var(--fg)', border:`2px solid var(--border-color)`, boxShadow:`2px 2px 0 var(--shadow-color)`, cursor:'pointer' }}
+                              >
+                                <Images style={{ width:12, height:12 }} /> Images ({task.imageUrls.length})
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -476,6 +484,32 @@ export default function DashboardPage() {
 
         </main>
       </div>
+
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <button onClick={() => setLightbox(null)} style={{ position: 'absolute', top: 20, right: 20, backgroundColor: 'transparent', border: '2px solid #fff', color: '#fff', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X style={{ width: 18, height: 18 }} />
+          </button>
+          {lightbox.images.length > 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index - 1 + l.images.length) % l.images.length } : null); }} style={{ position: 'absolute', left: 20, backgroundColor: 'transparent', border: '2px solid #fff', color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ChevronLeft style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+          <div onClick={(e) => e.stopPropagation()} style={{ maxWidth: '80vw', maxHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <img src={lightbox.images[lightbox.index]} alt={`Image ${lightbox.index + 1}`} style={{ maxWidth: '100%', maxHeight: '75vh', objectFit: 'contain', border: '3px solid #fff' }} />
+            {lightbox.images.length > 1 && (
+              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: '#fff' }}>
+                {lightbox.index + 1} / {lightbox.images.length}
+              </span>
+            )}
+          </div>
+          {lightbox.images.length > 1 && (
+            <button onClick={(e) => { e.stopPropagation(); setLightbox(l => l ? { ...l, index: (l.index + 1) % l.images.length } : null); }} style={{ position: 'absolute', right: 20, backgroundColor: 'transparent', border: '2px solid #fff', color: '#fff', width: 40, height: 40, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ChevronRight style={{ width: 20, height: 20 }} />
+            </button>
+          )}
+        </div>
+      )}
     </VolunteerVerificationGuard>
   );
 }
