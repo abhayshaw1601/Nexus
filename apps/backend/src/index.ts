@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import mongoose from 'mongoose';
@@ -29,6 +30,8 @@ const PORT = process.env.PORT || 5000;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
+// Static file serving removed in favor of Cloudinary storage
+
 
 // Attach io to request for use in controllers
 app.use((req, res, next) => {

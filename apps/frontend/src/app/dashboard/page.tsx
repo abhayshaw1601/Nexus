@@ -2,12 +2,11 @@
 
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { MapPin, ChevronDown, Filter, LayoutDashboard } from "lucide-react";
+import { LogOut, MapPin, ChevronDown, Filter, LayoutDashboard, CheckCircle2, Navigation } from "lucide-react";
 import dynamic from "next/dynamic";
 import axios from "axios";
-import { useState } from "react";
 import { io, Socket } from "socket.io-client";
 
 import Sidebar from "@/components/Sidebar";
@@ -27,6 +26,8 @@ export default function DashboardPage() {
   const [showAll, setShowAll] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>("ALL");
   const [isOnDuty, setIsOnDuty] = useState(false);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [taskError, setTaskError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -48,6 +49,8 @@ export default function DashboardPage() {
   }, [status, router, session, user?.role, user?.ngoId]);
 
   const fetchTasks = async () => {
+    setIsLoadingTasks(true);
+    setTaskError(null);
     try {
       const isAdmin = user?.role === 'NGO_ADMIN';
       const endpoint = isAdmin ? '/tasks/all' : '/tasks';
@@ -55,14 +58,52 @@ export default function DashboardPage() {
         headers: { Authorization: `Bearer ${user?.accessToken}` }
       });
       setTasks(res.data);
-    } catch { console.error("Failed to fetch tasks"); }
+    } catch (err: any) {
+      console.error("Failed to fetch tasks:", err.response?.data || err.message);
+      setTaskError(err.response?.data?.message || err.message || 'Failed to load tasks');
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  const handleAcceptTask = async (taskId: string) => {
+    try {
+      await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/accept`, {}, {
+        headers: { Authorization: `Bearer ${user?.accessToken}` }
+      });
+      fetchTasks(); // Refresh
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to accept task');
+    }
+  };
+
+  const handleLocateTask = (task: any) => {
+    if (task.location?.coordinates?.length >= 2) {
+      // Coordinates are stored as [lng, lat] — Leaflet needs [lat, lng]
+      const [lng, lat] = task.location.coordinates;
+      setCenterLocation([lat, lng]);
+      // Scroll to map
+      document.querySelector('.map-section')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleSearch = () => {
+    const [lat, lng] = searchCoords.split(",").map(s => Number(s.trim()));
+    if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+      setCenterLocation([lat, lng]);
+    } else {
+      alert('Enter coordinates as: Lat, Lng (e.g. 12.9716, 77.5946)');
+    }
   };
 
   if (status === "loading" || !session) return null;
 
   const pendingSurveys = tasks.filter((t) => t.status === "OPEN").length;
   const activeTasks = tasks.filter((t) => t.status === "ASSIGNED").length;
-  const impactScore = "15%";
+  const completedTasks = tasks.filter((t) => t.status === "COMPLETED" || t.status === "VERIFIED").length;
+  const impactScore = tasks.length > 0
+    ? `${Math.round((completedTasks / tasks.length) * 100)}%`
+    : "N/A";
   const categories = ["ALL", ...Array.from(new Set(tasks.map((t) => t.category).filter(Boolean)))];
   const filtered = filterCategory === "ALL" ? tasks : tasks.filter((t) => t.category === filterCategory);
   const displayed = showAll ? filtered : filtered.slice(0, 5);
@@ -160,6 +201,31 @@ export default function DashboardPage() {
             </p>
           </div>
 
+          {/* ── ERROR BANNER ── */}
+          {taskError && (
+            <div style={{ margin: '1rem 2rem', padding: '1rem 1.5rem', backgroundColor: 'var(--accent-critical)', border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem' }}>
+              <div>
+                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.2em', color: '#fff', margin: 0 }}>API Error</p>
+                <p style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.75rem', color: '#fff', margin: '4px 0 0' }}>{taskError}</p>
+              </div>
+              <button
+                onClick={fetchTasks}
+                style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '6px 16px', backgroundColor: '#fff', color: '#000', border: `2px solid ${BLACK}`, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* ── LOADING INDICATOR ── */}
+          {isLoadingTasks && (
+            <div style={{ margin: '0.5rem 2rem', padding: '0.75rem 1.5rem', display: 'flex', alignItems: 'center', gap: 12, opacity: 0.7 }}>
+              <div style={{ width: 14, height: 14, border: `2px solid ${BLACK}`, borderTopColor: 'var(--pur)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--muted-fg)' }}>Loading tasks...</span>
+            </div>
+          )}
+
           {/* ── METRIC CARDS ── */}
           {user.role !== 'VOLUNTEER' && (
             <div className="stats-grid" style={S.statsGrid}>
@@ -218,22 +284,21 @@ export default function DashboardPage() {
               </div>
               <div style={{ display:'flex', gap:12, width: '100%', maxWidth: '400px' }}>
                 <input 
-                  placeholder="Lat, Lng" 
+                  placeholder="Lat, Lng  e.g. 12.97, 77.59" 
                   style={{ ...S.searchInput, flex: 1 }}
                   value={searchCoords}
                   onChange={(e) => setSearchCoords(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 />
-                <Button size="sm" onClick={() => {
-                  const [lat, lng] = searchCoords.split(",").map(Number);
-                  if (lat && lng) setCenterLocation([lat, lng]);
-                }}>Search</Button>
+                <Button size="sm" onClick={handleSearch}>Search</Button>
               </div>
             </div>
             <div className="map-container" style={{ flex:1, border:`2.5px solid ${BLACK}`, boxShadow:`4px 4px 0px ${WHITE}`, position:'relative', overflow:'hidden', minHeight: '300px' }}>
+            {/* ── VOLUNTEER MAP (Fix: pass isOnDuty not center) ── */}
               {user.role === 'VOLUNTEER' ? (
-                <VolunteerMap center={centerLocation} />
+                <VolunteerMap isOnDuty={isOnDuty} />
               ) : (
-                <MapboxHeatmap tasks={tasks} center={centerLocation} />
+                <MapboxHeatmap tasks={tasks} centerLocation={centerLocation} />
               )}
             </div>
           </section>
@@ -305,9 +370,17 @@ export default function DashboardPage() {
                       <th style={S.th}>Category</th>
                       <th style={S.th}>Urgency</th>
                       <th style={S.th}>Status</th>
+                      <th style={{ ...S.th, borderRight: 'none' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {displayed.length === 0 && !isLoadingTasks && (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>
+                          {taskError ? 'Error loading tasks — see banner above' : 'No tasks yet. Submit a survey to create one.'}
+                        </td>
+                      </tr>
+                    )}
                     {displayed.map((task) => (
                       <tr key={task._id} style={{ borderBottom:`1px solid rgba(128,128,128,0.15)` }}>
                         <td style={S.td}>{task.description}</td>
@@ -319,6 +392,28 @@ export default function DashboardPage() {
                         </td>
                         <td style={S.td}>
                           <span style={statusStyle(task.status)}>{task.status}</span>
+                        </td>
+                        <td style={{ ...S.td, borderRight: 'none' }}>
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                            {/* Volunteer: Accept OPEN tasks */}
+                            {user.role === 'VOLUNTEER' && task.status === 'OPEN' && (
+                              <button
+                                onClick={() => handleAcceptTask(task._id)}
+                                title="Accept Task"
+                                style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.55rem', textTransform:'uppercase', letterSpacing:'0.1em', padding:'4px 10px', backgroundColor:'var(--pur)', color:'#fff', border:`2px solid var(--border-color)`, boxShadow:`2px 2px 0 var(--shadow-color)`, cursor:'pointer' }}
+                              >
+                                <CheckCircle2 style={{ width:12, height:12 }} /> Accept
+                              </button>
+                            )}
+                            {/* All roles: Locate task on map */}
+                            <button
+                              onClick={() => handleLocateTask(task)}
+                              title="Locate on map"
+                              style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.55rem', textTransform:'uppercase', letterSpacing:'0.1em', padding:'4px 10px', backgroundColor:'var(--ylw)', color:'#000', border:`2px solid var(--border-color)`, boxShadow:`2px 2px 0 var(--shadow-color)`, cursor:'pointer' }}
+                            >
+                              <Navigation style={{ width:12, height:12 }} /> Locate
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

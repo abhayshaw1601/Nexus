@@ -151,7 +151,18 @@ export const completeTask = async (req: Request, res: Response) => {
 // Admin Endpoints
 export const getAllTasks = async (req: Request, res: Response) => {
   try {
-    const tasks = await Task.find({}).sort({ createdAt: -1 });
+    const user = (req as any).user;
+
+    // Super admins see everything
+    if (user.role === 'SUPER_ADMIN') {
+      const tasks = await Task.find({}).sort({ createdAt: -1 });
+      return res.json(tasks);
+    }
+
+    const ngoId = user.ngoId;
+    if (!ngoId) return res.status(403).json({ message: 'Organization context missing' });
+
+    const tasks = await Task.find({ ngoId }).sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });

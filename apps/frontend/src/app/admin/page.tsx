@@ -45,7 +45,9 @@ export default function AdminPage() {
       ]);
       setTasks(tasksRes.data);
       setUsers(usersRes.data);
-    } catch { console.error("Failed to fetch admin data"); }
+    } catch (error) { 
+      console.error("Failed to fetch admin data:", error); 
+    }
   };
 
   const handleVerify = async (taskId: string) => {
@@ -87,25 +89,28 @@ export default function AdminPage() {
   );
 
   const statusBadge = (s: string) => {
-    const bg = s === 'VERIFIED' ? SUCC : s === 'COMPLETED' ? PUR : 'var(--bg)';
-    const color = (s === 'VERIFIED' || s === 'COMPLETED') ? '#FFFFFF' : '#000000';
+    const map: Record<string, { bg: string; color: string }> = {
+      OPEN:      { bg: PUR,                      color: '#FFFFFF' },
+      ASSIGNED:  { bg: YLW,                      color: '#000000' },
+      COMPLETED: { bg: 'var(--accent-critical)',  color: '#FFFFFF' },
+      VERIFIED:  { bg: SUCC,                     color: '#FFFFFF' },
+    };
+    const style = map[s] || { bg: 'var(--bg)', color: '#000000' };
     return (
-      <span style={{ 
-        fontFamily: "'Space Mono',monospace", 
-        fontWeight: 700, 
-        fontSize: '0.6rem', 
-        textTransform: 'uppercase', 
-        letterSpacing: '0.08em', 
-        backgroundColor: bg, 
-        color: color, 
-        border: `2px solid ${BLACK}`, 
-        boxShadow: `3px 3px 0px 0px #000`, 
-        padding: '4px 12px', 
+      <span style={{
+        fontFamily: "'Space Mono',monospace",
+        fontWeight: 700,
+        fontSize: '0.6rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        backgroundColor: style.bg,
+        color: style.color,
+        border: `2px solid ${BLACK}`,
+        boxShadow: `3px 3px 0px 0px #000`,
+        padding: '4px 12px',
         display: 'inline-block',
         minWidth: 'fit-content'
-      }}>
-        {s}
-      </span>
+      }}>{s}</span>
     );
   };
 
@@ -151,21 +156,36 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
+                  {tasks.length === 0 && (
+                    <tr>
+                      <td colSpan={5} style={{ ...TD, textAlign: 'center', padding: '3rem', color: 'var(--muted-fg)' }}>
+                        No tasks found. Submit a survey to generate tasks.
+                      </td>
+                    </tr>
+                  )}
                   {tasks.map(t => (
                     <tr key={t._id}>
-                      <td style={TD}>{t.title}</td>
+                      <td style={TD}>{t.description || '—'}</td>
                       <td style={TD}>{t.category}</td>
                       <td style={TD}>{t.urgencyScore}</td>
                       <td style={TD}>{statusBadge(t.status)}</td>
                       <td style={TD}>
                         <div style={{ display: 'flex', gap: 10 }}>
-                          {t.status === 'COMPLETED' && (
-                            <button onClick={() => handleVerify(t._id)} style={{ padding: '4px', background: PUR, border: `1.5px solid ${BLACK}`, cursor: 'pointer' }}>
-                              <CheckCircle2 style={{ width: 14, height: 14, color: '#FFFFFF' }} />
+                          {t.status !== 'VERIFIED' && (
+                            <button
+                              onClick={() => handleVerify(t._id)}
+                              title="Mark as Verified / Done"
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '4px 10px', background: SUCC, border: `1.5px solid ${BLACK}`, boxShadow: `2px 2px 0 #000`, cursor: 'pointer', color: '#fff' }}
+                            >
+                              <CheckCircle2 style={{ width: 12, height: 12 }} /> Mark Done
                             </button>
                           )}
-                          <button onClick={() => handleDelete(t._id)} style={{ padding: '4px', background: 'var(--accent-critical)', border: `1.5px solid ${BLACK}`, cursor: 'pointer' }}>
-                            <Trash2 style={{ width: 14, height: 14, color: '#FFFFFF' }} />
+                          <button
+                            onClick={() => handleDelete(t._id)}
+                            title="Delete task"
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.55rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '4px 10px', background: 'var(--accent-critical)', border: `1.5px solid ${BLACK}`, boxShadow: `2px 2px 0 #000`, cursor: 'pointer', color: '#fff' }}
+                          >
+                            <Trash2 style={{ width: 12, height: 12 }} /> Delete
                           </button>
                         </div>
                       </td>
@@ -180,21 +200,26 @@ export default function AdminPage() {
               <style>{`
                 @media (max-width: 767px) { .mobile-only { display: flex !important; flex-direction: column; gap: 16px; padding: 16px; } }
               `}</style>
+              {tasks.length === 0 && (
+                <div style={{ padding: '3rem', textAlign: 'center', fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>
+                  No tasks found. Submit a survey to generate tasks.
+                </div>
+              )}
               {tasks.map(t => (
                 <div key={t._id} style={{ border: `2px solid ${BLACK}`, padding: '1rem', backgroundColor: 'var(--card-bg)', boxShadow: `3px 3px 0px 0px #000`, display: 'flex', flexDirection: 'column' }}>
                   <div style={{ marginBottom: 12 }}>
                     <span className="neo-badge" style={{ color: PUR, marginBottom: 12, border: `2.5px solid ${BLACK}` }}>{t.category}</span>
                     <div className="neo-scroll-content" style={{ maxHeight: '100px', paddingRight: '4px' }}>
-                      <h3 style={{ margin: '4px 0', fontSize: '1rem', fontWeight: 900 }}>{t.title}</h3>
+                      <h3 style={{ margin: '4px 0', fontSize: '1rem', fontWeight: 900 }}>{t.description || '—'}</h3>
                       <p style={{ margin: 0, fontSize: '0.75rem', fontFamily: "'Space Mono', monospace" }}>Urgency: {t.urgencyScore}</p>
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 12 }}>
                     {statusBadge(t.status)}
                     <div style={{ display: 'flex', gap: 12 }}>
-                      {t.status === 'COMPLETED' && (
-                        <button onClick={() => handleVerify(t._id)} style={{ padding: '8px', background: PUR, border: `2px solid ${BLACK}`, cursor: 'pointer', display: 'flex', boxShadow: `3px 3px 0px 0px #000` }}>
-                          <CheckCircle2 style={{ width: 16, height: 16, color: '#FFFFFF' }} />
+                      {t.status !== 'VERIFIED' && (
+                        <button onClick={() => handleVerify(t._id)} title="Mark Done" style={{ padding: '8px 12px', background: SUCC, border: `2px solid ${BLACK}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, boxShadow: `3px 3px 0px 0px #000`, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.55rem', color: '#fff', textTransform: 'uppercase' }}>
+                          <CheckCircle2 style={{ width: 14, height: 14 }} /> Done
                         </button>
                       )}
                       <button onClick={() => handleDelete(t._id)} style={{ padding: '8px', background: 'var(--accent-critical)', border: `2px solid ${BLACK}`, cursor: 'pointer', display: 'flex', boxShadow: `3px 3px 0px 0px #000` }}>

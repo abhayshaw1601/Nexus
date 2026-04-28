@@ -13,12 +13,14 @@ export interface ISurvey extends Document {
   };
   ngoId?: mongoose.Types.ObjectId;
   dataStack?: any;
-  aiExtractedData?: {
-    rawText?: string;
-    suggestedCategory?: string;
-    suggestedUrgency?: number;
-    suggestedDescription?: string;
-  };
+  extractedEntries?: Array<{
+    category: string;
+    urgency: number;
+    latitude?: string;
+    longitude?: string;
+    description: string;
+    status: 'PENDING' | 'VERIFIED' | 'REJECTED';
+  }>;
   createdAt: Date;
 }
 
@@ -37,6 +39,14 @@ const SurveySchema: Schema = new Schema({
     type: { type: String, enum: ['Point'], default: 'Point' },
     coordinates: { type: [Number] }
   },
+  extractedEntries: [{
+    category: String,
+    urgency: Number,
+    latitude: String,
+    longitude: String,
+    description: String,
+    status: { type: String, enum: ['PENDING', 'VERIFIED', 'REJECTED'], default: 'PENDING' }
+  }],
   ngoId: { type: Schema.Types.ObjectId, ref: 'NGO' },
   dataStack: { type: Schema.Types.Mixed, default: {} },
   aiExtractedData: {

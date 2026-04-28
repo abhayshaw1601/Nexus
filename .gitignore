@@ -1,5 +1,74 @@
-node_modules
+# ─── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+package-lock.json
+
+# ─── Next.js ───────────────────────────────────────────────────────────────────
+.next/
+out/
+dist/
+build/
+
+# ─── Environment variables (NEVER commit secrets) ──────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ─── Python ────────────────────────────────────────────────────────────────────
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.Python
+
+# Bytecode / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.pyo
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+wheels/
+
+# ─── AI Service specifics ──────────────────────────────────────────────────────
+# Temporary Sarvam AI output files
+sarvam_result.zip
+sarvam_result.md
+*.zip
+
+# Uploaded survey images
+apps/backend/uploads/
+apps/ai-service/uploads/
+
+# ─── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.log.*
+
+# ─── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.suo
+*.user
+
+# ─── TypeScript ────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ─── Misc ──────────────────────────────────────────────────────────────────────
 implementation_plan.md
 overview_of_plan.md
-frontend\node_modules 
-.env
