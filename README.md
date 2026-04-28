@@ -44,7 +44,7 @@ graph TB
     subgraph "AI Microservice (FastAPI)"
         I[Docling Layout Analyzer]
         J[Sarvam AI Indic OCR]
-        K[Gemini 1.5 Flash Parser]
+        K[Gemini 2.5 Flash Lite Parser]
         L[Multi-Entry Processor]
     end
     
