@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
           {/* ── HEADER (Desktop Only) ── */}
           <header className="desktop-only" style={{ ...S.header, display: 'flex' }}>
-            <style jsx>{`
+            <style>{`
               @media (max-width: 767px) { .desktop-only { display: none !important; } }
             `}</style>
             <h1 style={S.h1}>Overview [ {user.name} ]</h1>
@@ -146,16 +146,12 @@ export default function DashboardPage() {
                 </div>
               )}
               <span style={S.roleBadge}>{user.role}</span>
-              <Button variant="ghost" size="sm" onClick={() => signOut()}>
-                <LogOut style={{ marginRight:8, width:16, height:16, strokeWidth:1.5 }} />
-                Logout
-              </Button>
             </div>
           </header>
 
           {/* ── MOBILE TITLE ── */}
           <div className="mobile-only" style={{ display: 'none', marginBottom: '24px', padding: '0 16px' }}>
-            <style jsx>{`
+            <style>{`
               @media (max-width: 767px) { .mobile-only { display: block !important; } }
             `}</style>
             <h1 style={{ ...S.h1, fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Overview</h1>
@@ -167,7 +163,7 @@ export default function DashboardPage() {
           {/* ── METRIC CARDS ── */}
           {user.role !== 'VOLUNTEER' && (
             <div className="stats-grid" style={S.statsGrid}>
-              <style jsx>{`
+              <style>{`
                 @media (max-width: 767px) { 
                   .stats-grid { 
                     display: flex !important; 
@@ -198,7 +194,7 @@ export default function DashboardPage() {
 
           {/* ── GEOSPATIAL ── */}
           <section className="map-section" style={S.mapSection}>
-            <style jsx>{`
+            <style>{`
               @media (max-width: 767px) {
                 .map-section {
                   padding: 16px !important;
@@ -244,7 +240,7 @@ export default function DashboardPage() {
 
           {/* ── TASKS TABLE ── */}
           <section className="table-wrap-container" style={S.tableWrap}>
-            <style jsx>{`
+            <style>{`
               @media (max-width: 1024px) {
                 .desktop-only { display: none !important; }
                 .mobile-only { display: block !important; }

@@ -137,7 +137,7 @@ export default function AdminPage() {
 
             {/* Desktop Table */}
             <div className="desktop-only" style={{ display: 'block' }}>
-              <style jsx>{`
+              <style>{`
                 @media (max-width: 767px) { .desktop-only { display: none !important; } }
               `}</style>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -177,7 +177,7 @@ export default function AdminPage() {
 
             {/* Mobile Card Stack */}
             <div className="mobile-only" style={{ display: 'none' }}>
-              <style jsx>{`
+              <style>{`
                 @media (max-width: 767px) { .mobile-only { display: flex !important; flex-direction: column; gap: 16px; padding: 16px; } }
               `}</style>
               {tasks.map(t => (
@@ -215,7 +215,7 @@ export default function AdminPage() {
 
             {/* Desktop Table */}
             <div className="desktop-only" style={{ display: 'block' }}>
-              <style jsx>{`
+              <style>{`
                 @media (max-width: 767px) { .desktop-only { display: none !important; } }
               `}</style>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -246,7 +246,7 @@ export default function AdminPage() {
 
             {/* Mobile Card Stack */}
             <div className="mobile-only" style={{ display: 'none' }}>
-              <style jsx>{`
+              <style>{`
                 @media (max-width: 767px) { .mobile-only { display: flex !important; flex-direction: column; gap: 16px; padding: 16px; } }
               `}</style>
               {users.map(u => (

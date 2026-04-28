@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { LayoutDashboard, PlusCircle, Users, CheckCircle, Sun, Heart, Menu, X, LogOut } from "lucide-react";
-import { useTheme } from "./Providers";
+import { LayoutDashboard, PlusCircle, Users, CheckCircle, Heart, Menu, X, LogOut } from "lucide-react";
 import { useState, useEffect } from "react";
 import { signOut } from "next-auth/react";
 
@@ -17,7 +16,6 @@ const HEADER_BG = 'var(--header-bg)';
 
 export default function Sidebar() {
   const { data: session } = useSession();
-  const { resolvedTheme, setTheme } = useTheme();
   const pathname = usePathname();
   const user = session?.user as any;
   const [mounted, setMounted] = useState(false);
@@ -161,21 +159,45 @@ export default function Sidebar() {
         )}
       </nav>
 
-      {/* Theme toggle — always accessible at bottom */}
-      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}` }}>
-        {mounted && (
-          <button
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '10px 16px', minHeight: 48, fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: FG, backgroundColor: 'transparent', border: `2px solid transparent`, cursor: 'pointer', transition: 'all 0.15s ease' }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0, 137, 123, 0.1)'; (e.currentTarget as HTMLElement).style.border = `2px solid ${BLACK}`; (e.currentTarget as HTMLElement).style.boxShadow = `3px 3px 0 ${WHITE}`; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; (e.currentTarget as HTMLElement).style.border = `2px solid transparent`; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
-          >
-            <div style={{ position: 'relative', width: 16, height: 16, marginRight: 12 }}>
-              <Sun style={{ width: 16, height: 16, strokeWidth: 1.5, color: PUR }} />
-            </div>
-            {resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-          </button>
-        )}
+      {/* Logout — anchored at bottom */}
+      <div style={{ padding: '1rem', borderTop: `2.5px solid ${BLACK}`, marginTop: 'auto' }}>
+        <button
+          onClick={() => signOut()}
+          style={{ 
+            width: '100%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            padding: '12px 16px', 
+            minHeight: 48, 
+            fontFamily: "'Plus Jakarta Sans',sans-serif", 
+            fontWeight: 900, 
+            fontSize: '0.65rem', 
+            letterSpacing: '0.15em', 
+            textTransform: 'uppercase', 
+            color: FG, 
+            backgroundColor: 'transparent', 
+            border: `2px solid transparent`, 
+            cursor: 'pointer', 
+            transition: 'all 0.15s ease' 
+          }}
+          onMouseEnter={e => { 
+            const el = e.currentTarget as HTMLElement;
+            el.style.backgroundColor = 'rgba(255, 92, 92, 0.1)'; 
+            el.style.border = `2px solid var(--accent-critical)`; 
+            el.style.boxShadow = `3px 3px 0 var(--accent-critical)`; 
+            el.style.transform = 'translate(-1px,-1px)';
+          }}
+          onMouseLeave={e => { 
+            const el = e.currentTarget as HTMLElement;
+            el.style.backgroundColor = 'transparent'; 
+            el.style.border = `2px solid transparent`; 
+            el.style.boxShadow = 'none'; 
+            el.style.transform = 'none';
+          }}
+        >
+          <LogOut style={{ marginRight: 12, width: 16, height: 16, strokeWidth: 1.5, color: 'var(--accent-critical)' }} />
+          LOGOUT
+        </button>
       </div>
     </aside>
   );
@@ -193,7 +215,7 @@ export default function Sidebar() {
           backgroundColor: HEADER_BG,
           borderBottom: `2.5px solid ${BLACK}`,
           display: 'grid',
-          gridTemplateColumns: '48px 1fr 110px',
+          gridTemplateColumns: '48px 1fr 48px',
           alignItems: 'center',
           padding: '0 16px',
           zIndex: 1000,
@@ -215,7 +237,7 @@ export default function Sidebar() {
             <Menu style={{ width: 24, height: 24, color: FG }} />
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', justifyContent: 'center', gridColumn: '2' }}>
             <Heart style={{ width: 18, height: 18, color: PUR, marginRight: 8, flexShrink: 0 }} />
             <span style={{
               fontFamily: "'Plus Jakarta Sans',sans-serif",
@@ -229,30 +251,7 @@ export default function Sidebar() {
               NexusImpact
             </span>
           </div>
-
-          <button
-            onClick={() => signOut()}
-            style={{
-              background: 'transparent',
-              border: `2.5px solid ${BLACK}`,
-              padding: '4px 12px',
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontWeight: 900,
-              fontSize: '0.6rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: FG,
-              boxShadow: `3px 3px 0px 0px #000`,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              justifySelf: 'end'
-            }}
-          >
-            <LogOut style={{ width: 12, height: 12 }} />
-            Logout
-          </button>
+          <div style={{ gridColumn: '3' }} />
         </header>
       )}
 

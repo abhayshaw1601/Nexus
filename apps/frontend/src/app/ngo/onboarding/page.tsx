@@ -49,11 +49,11 @@ export default function NGOOnboarding() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-[100dvh] bg-background overflow-y-auto">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-12">
-        <div className="max-w-2xl space-y-8">
-          <div>
+      <main className="flex-1 p-4 pt-[88px] md:p-8">
+        <div className="max-w-[800px] mx-auto my-8">
+          <div className="px-4 md:px-0 mb-10">
             <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase">
               REGISTER YOUR [NGO]
             </h2>
@@ -62,19 +62,20 @@ export default function NGOOnboarding() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 bg-card p-8 border-2 border-border shadow-[8px_8px_0px_var(--shadow-color)]">
+          <form onSubmit={handleSubmit} className="bg-card w-[calc(100%-32px)] md:w-full mx-auto p-6 md:p-12 border-2 border-border shadow-[6px_6px_0px_0px_var(--shadow-color)] space-y-10 pb-16">
             <Input
               label="Organization Name"
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="E.G. Green Earth Foundation"
+              className="w-full"
             />
             
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Description</label>
+            <div className="space-y-6">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground">Description</label>
               <textarea
-                className="flex min-h-[100px] w-full rounded-[4px] border-2 border-border bg-background px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
+                className="flex min-h-[160px] w-full rounded-[0px] border-2 border-border bg-background px-4 py-4 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-300 font-medium"
                 required
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -82,7 +83,7 @@ export default function NGOOnboarding() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               <Input
                 label="Contact Email"
                 type="email"
@@ -99,18 +100,20 @@ export default function NGOOnboarding() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Location (Lng, Lat)</label>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-6">
+              <label className="text-xs font-black uppercase tracking-wider text-muted-foreground block">Location (Lng, Lat)</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <Input
                   type="number"
                   step="any"
+                  label="Longitude"
                   value={formData.coordinates[0]}
                   onChange={(e) => setFormData({ ...formData, coordinates: [parseFloat(e.target.value), formData.coordinates[1]] })}
                 />
                 <Input
                   type="number"
                   step="any"
+                  label="Latitude"
                   value={formData.coordinates[1]}
                   onChange={(e) => setFormData({ ...formData, coordinates: [formData.coordinates[0], parseFloat(e.target.value)] })}
                 />
@@ -119,9 +122,11 @@ export default function NGOOnboarding() {
 
             {error && <p className="text-[10px] font-bold text-destructive uppercase tracking-[0.2em]">{error}</p>}
 
-            <Button type="submit" className="w-full h-14" isLoading={isLoading}>
-              Establish Organization
-            </Button>
+            <div className="pt-8">
+              <Button type="submit" variant="primary" size="lg" shadowSize="lg" className="w-full h-14" isLoading={isLoading}>
+                Establish Organization
+              </Button>
+            </div>
           </form>
         </div>
       </main>

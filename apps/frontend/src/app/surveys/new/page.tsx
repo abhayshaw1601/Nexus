@@ -4,39 +4,11 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { UploadCloud, CheckCircle2, AlertCircle, MapPin } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
-
-const BG    = 'var(--bg)';
-const BLACK = 'var(--border-color)';
-const PUR   = 'var(--pur)';
-const YLW   = 'var(--ylw)';
-const SUCC  = 'var(--accent-success)';
-const CRIT  = 'var(--accent-critical)';
-const WHITE = 'var(--shadow-color)';
-const FG    = 'var(--fg)';
-const CARD  = 'var(--card-bg)';
-
-const inp = {
-  width: '100%', padding: '10px 14px', backgroundColor: 'var(--bg)', border: `2.5px solid ${BLACK}`,
-  boxShadow: 'var(--neo-shadow)', fontFamily: "'Space Mono',monospace", fontSize: '0.85rem',
-  color: FG, outline: 'none', boxSizing: 'border-box' as const,
-};
-const SHADOW = 'var(--neo-shadow)';
-
-const primaryBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
-  fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.85rem',
-  textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF',
-  border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '14px 24px',
-  cursor: 'pointer', transition: 'transform 0.1s, box-shadow 0.1s', display: 'inline-flex',
-  alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', ...extra,
-});
-
-const secondaryBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
-  ...primaryBtn(extra), backgroundColor: 'var(--bg)', color: FG,
-});
 
 export default function NewSurveyPage() {
   const { data: session } = useSession();
@@ -118,212 +90,223 @@ export default function NewSurveyPage() {
     }
   };
 
-  const label = (text: string) => (
-    <label style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: FG, display: 'block', marginBottom: 8 }}>
-      {text}
-    </label>
-  );
+
 
   return (
-    <div className="flex flex-col md:flex-row min-h-[100dvh] bg-[#F2EFE9] overflow-x-hidden">
+    <div className="page-layout">
       <Sidebar />
-      <main className="flex-1 overflow-y-auto p-6 pt-24 md:p-12 md:pt-12" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-        <div className="max-w-5xl w-full mx-auto mb-10">
+      <main className="neo-main" style={{ width: '100%', overflowX: 'hidden' }}>
+        <div style={{ width: 'min(100%, 1200px)', margin: '0 auto', paddingBottom: '4rem' }}>
 
-        {/* Page Header */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column-reverse', 
-          gap: '1.5rem', 
-          borderBottom: `2.5px solid ${BLACK}`,
-          paddingBottom: '2rem',
-          zIndex: 30,
-          position: 'relative'
-        }} className="md:flex-row md:justify-between md:items-end">
-          <div style={{ flex: 1 }}>
-            <h1 className="page-title" style={{ lineHeight: 1.1, margin: 0, textAlign: 'left' }}>
-              Add Community Data
-            </h1>
-            <p className="page-subtitle" style={{ marginTop: '1rem' }}>
-              Upload a paper survey for AI processing or enter data manually.
-            </p>
+          {/* Header Row */}
+          <div style={{ marginBottom: '0', paddingBottom: '1.5rem', borderBottom: `2.5px solid var(--border-color)` }}>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+              <div className="space-y-1">
+                <h1 className="page-title">
+                  Add [ Community Data ]
+                </h1>
+                <p className="page-subtitle">
+                  Upload survey document or manual telemetry entry
+                </p>
+              </div>
+              <Link href="/dashboard">
+                <Button variant="outline" size="sm" className="bg-white hover:bg-[#F2EFE9] transition-colors border-[2px] border-black shadow-[4px_4px_0px_0px_#000]">
+                  ← Back to Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link href="/dashboard" style={{ width: '100%', maxWidth: 'fit-content' }}>
-            <button style={{ 
-              fontFamily: "'Plus Jakarta Sans',sans-serif", 
-              fontWeight: 900, 
-              fontSize: '0.7rem', 
-              textTransform: 'uppercase', 
-              letterSpacing: '0.15em', 
-              backgroundColor: PUR, 
-              color: '#FFFFFF', 
-              border: `2.5px solid ${BLACK}`, 
-              boxShadow: SHADOW, 
-              padding: '12px 24px', 
-              cursor: 'pointer', 
-              width: '100%',
-              whiteSpace: 'nowrap' 
-            }}>
-              ← Back to Dashboard
-            </button>
-          </Link>
-        </div>
 
-        {/* Tab Switcher */}
-        <div className="tab-switcher" style={{ 
-          display: 'flex', 
-          width: '100%', 
-          zIndex: 20,
-          position: 'relative',
-          gap: 0
-        }}>
-          {(['ai', 'manual'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{ 
-                fontFamily: "'Plus Jakarta Sans',sans-serif", 
-                fontWeight: 900, 
-                fontSize: '12px', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.1em', 
-                padding: '14px 20px', 
-                backgroundColor: activeTab === tab ? PUR : 'var(--card-bg)', 
-                color: activeTab === tab ? '#FFFFFF' : FG, 
-                border: `2.5px solid ${BLACK}`, 
-                boxShadow: activeTab === tab ? 'none' : SHADOW, 
-                transform: activeTab === tab ? 'translate(2px,2px)' : 'none', 
-                cursor: 'pointer', 
-                flex: 1,
-                transition: 'all 0.1s'
-              }}
-            >
-              {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
-            </button>
-          ))}
-        </div>
+          {/* Master Card Container */}
+          <div className="neo-card-full-deep" style={{ 
+            backgroundColor: 'white', 
+            border: '2px solid black', 
+            boxShadow: '8px 8px 0px 0px #000', 
+            padding: '2.5rem',
+            marginTop: '2rem'
+          }}>
 
-        {/* Main form card */}
-        <div className="neo-card-full" style={{ zIndex: 10, position: 'relative', marginTop: 0 }}>
+            {/* Segmented Tab Control */}
+            <div className="flex border-[3px] border-black shadow-[4px_4px_0px_0px_#000] bg-black mb-10">
+              {(['ai', 'manual'] as const).map((tab, idx) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{ cursor: 'pointer' }}
+                  className={`flex-1 py-5 text-[0.8rem] font-black uppercase tracking-[0.15em] transition-all border-none outline-none ${activeTab === tab
+                      ? 'bg-[#008080] text-white'
+                      : 'bg-white text-black hover:bg-[#F2EFE9]'
+                    } ${idx === 0 ? 'border-r-[3px] border-black' : ''}`}
+                >
+                  {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
+                </button>
+              ))}
+            </div>
 
-          {/* ─ AI Tab ─ */}
-          {activeTab === 'ai' && (
-            <form onSubmit={handleFileUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div
-                onDragOver={(e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
-                style={{ border: `2.5px dashed ${isDragging ? PUR : BLACK}`, backgroundColor: isDragging ? 'rgba(0, 137, 123, 0.1)' : 'var(--bg)', boxShadow: isDragging ? `0 0 0 3px ${PUR}` : 'none', padding: '4rem', textAlign: 'center', transition: 'all 0.15s' }}
-              >
-                <UploadCloud style={{ margin: '0 auto 1rem', width: 48, height: 48, color: isDragging ? PUR : 'var(--muted-fg)', strokeWidth: 1.5 }} />
-                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.85rem', color: 'var(--muted-fg)', marginBottom: 8 }}>
-                  <label htmlFor="file-upload" style={{ cursor: 'pointer', fontWeight: 700, color: FG, textDecoration: 'underline' }}>
-                    Upload a file
-                    <input id="file-upload" type="file" style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
-                  </label>
-                  {' '}or drag and drop
+            {/* ─ AI Upload Section ─ */}
+            {activeTab === 'ai' && (
+              <form onSubmit={handleFileUpload} className="space-y-10">
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
+                  className={`w-full border-[3px] border-dashed p-16 text-center transition-all ${isDragging ? 'border-[#008080] bg-[#008080]/5' : 'border-black bg-[#F2EFE9]/30'
+                    }`}
+                >
+                  <UploadCloud className={`mx-auto mb-6 w-16 h-16 stroke-[1.5pt] ${isDragging ? 'text-[#008080]' : 'text-black/40'}`} />
+                  <div className="font-body text-[0.9rem] text-black/60 mb-3 flex flex-col items-center gap-2">
+                    <label htmlFor="file-upload" className="cursor-pointer font-bold text-black underline decoration-2 underline-offset-4 hover:text-[#008080] transition-colors">
+                      Browse Local Files
+                      <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                    </label>
+                    <span className="text-[0.7rem] uppercase font-black tracking-widest">or drag and drop survey here</span>
+                  </div>
+                  <p className="font-body text-[0.7rem] font-bold text-black/40 uppercase tracking-wider">PNG, JPG, PDF up to 10MB</p>
+                  {file && (
+                    <div className="mt-8 p-3 bg-accent-success/10 border-2 border-accent-success inline-block">
+                      <p className="font-body text-[0.8rem] font-black text-accent-success uppercase tracking-wider">
+                        Ready: {file.name}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)' }}>PNG, JPG, GIF up to 5MB</p>
-                {file && <p style={{ marginTop: 12, fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: SUCC }}>Selected: {file.name}</p>}
-              </div>
-              <button
-                type="submit"
-                disabled={!file || isUploading}
-                style={{ ...primaryBtn({ maxWidth: 400, margin: '0 auto' }), opacity: (!file || isUploading) ? 0.5 : 1 }}
-                onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
-                onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}
-              >
-                {isUploading ? 'Processing...' : 'Process with AI'}
-              </button>
-            </form>
-          )}
 
-          {/* ─ Manual Tab ─ */}
-          {activeTab === 'manual' && (
-            <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div className="form-grid-2col">
-                <div>
-                  {label('Category')}
-                  <select
-                    style={inp}
-                    value={manualData.category}
-                    onChange={e => setManualData({ ...manualData, category: e.target.value })}
+                <div className="flex justify-center pt-4">
+                  <Button
+                    type="submit"
+                    disabled={!file || isUploading}
+                    size="lg"
+                    shadowSize="lg"
+                    className="w-full h-16 text-lg border-[3px] border-black shadow-[4px_4px_0px_0px_#000]"
+                    isLoading={isUploading}
+                    style={{ backgroundColor: '#008080', color: 'white' }}
                   >
-                    {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Other'].map(c => <option key={c}>{c}</option>)}
-                  </select>
+                    Initialize AI Processing
+                  </Button>
                 </div>
-                <div>
-                  {label('Urgency Score (1-5)')}
-                  <input type="number" min="1" max="5" required style={inp} value={manualData.urgencyScore}
-                    onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })} />
-                </div>
-              </div>
+              </form>
+            )}
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  {label('Coordinates')}
-                  <button type="button" onClick={handleGetCurrentLocation}
-                    style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                    onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
-                    onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '3px 3px 0 #000'; }}
+            {/* ─ Manual Entry Form ─ */}
+            {activeTab === 'manual' && (
+              <form onSubmit={handleManualSubmit} className="space-y-10">
+                
+                {/* Standardized Control Group: Category & Urgency */}
+                <div className="flex flex-col md:flex-row gap-8 justify-between">
+                  <div className="flex-1 space-y-4">
+                    <label className="text-[0.75rem] font-black uppercase tracking-[0.1em] text-black/60 block">Category</label>
+                    <select
+                      className="flex h-[56px] w-full rounded-none border-[3px] border-black bg-white px-4 py-2 text-sm text-black focus:outline-none focus:ring-4 focus:ring-[#008080]/10 transition-all font-bold appearance-none cursor-pointer"
+                      style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'black\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'3\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
+                      value={manualData.category}
+                      onChange={e => setManualData({ ...manualData, category: e.target.value })}
+                    >
+                      {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Other'].map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="flex-1">
+                    <Input
+                      label="Urgency Level (1-5)"
+                      type="number"
+                      min="1"
+                      max="5"
+                      required
+                      value={manualData.urgencyScore}
+                      onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })}
+                      className="h-[56px] border-[3px] border-black"
+                    />
+                  </div>
+                </div>
+
+                {/* Sub-Header: Location */}
+                <div className="flex flex-col md:flex-row justify-between items-center border-b-2 border-black/10 pb-4">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-black">Geospatial Telemetry</h3>
+                  <button
+                    type="button"
+                    onClick={handleGetCurrentLocation}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#FFB300] text-black border-[3px] border-black shadow-[4px_4px_0px_0px_#000] text-[0.7rem] font-black uppercase tracking-wider cursor-pointer active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
                   >
-                    <MapPin style={{ width: 12, height: 12 }} /> Use My Location
+                    <MapPin className="w-4 h-4" /> Fetch My Coordinates
                   </button>
                 </div>
-                <div className="form-grid-2col">
-                  <div>
-                    {label('Latitude')}
-                    <input type="text" placeholder="e.g. 12.97" required style={inp} value={manualData.lat}
-                      onChange={e => setManualData({ ...manualData, lat: e.target.value })} />
-                  </div>
-                  <div>
-                    {label('Longitude')}
-                    <input type="text" placeholder="e.g. 77.59" required style={inp} value={manualData.lng}
-                      onChange={e => setManualData({ ...manualData, lng: e.target.value })} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <Input
+                    label="Latitude (Y)"
+                    placeholder="e.g. 12.9716"
+                    required
+                    value={manualData.lat}
+                    onChange={e => setManualData({ ...manualData, lat: e.target.value })}
+                    className="border-[3px] border-black"
+                  />
+                  <Input
+                    label="Longitude (X)"
+                    placeholder="e.g. 77.5946"
+                    required
+                    value={manualData.lng}
+                    onChange={e => setManualData({ ...manualData, lng: e.target.value })}
+                    className="border-[3px] border-black"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="text-[0.75rem] font-black uppercase tracking-[0.1em] text-black/60 block">Description of Community Need</label>
+                  <textarea
+                    required
+                    className="flex min-h-[180px] w-full rounded-none border-[3px] border-black bg-white p-5 text-sm text-black focus:outline-none focus:ring-4 focus:ring-[#008080]/10 transition-all font-bold resize-vertical"
+                    value={manualData.description}
+                    onChange={e => setManualData({ ...manualData, description: e.target.value })}
+                    placeholder="Enter detailed observations here..."
+                  />
+                </div>
+
+                {/* Footer Action Bar: Stretched Buttons */}
+                <div className="flex flex-col md:flex-row gap-6 pt-6">
+                  <Button
+                    type="button"
+                    onClick={handleSaveDraft}
+                    disabled={isUploading}
+                    variant="outline"
+                    className="flex-1 h-14 bg-white border-[3px] border-black shadow-[4px_4px_0px_0px_#000] text-black font-black uppercase tracking-wider"
+                  >
+                    Save Draft
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isUploading}
+                    className="flex-1 h-14 text-white border-[3px] border-black shadow-[4px_4px_0px_0px_#000] font-black uppercase tracking-wider"
+                    isLoading={isUploading}
+                    style={{ backgroundColor: '#008080' }}
+                  >
+                    Submit Survey
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* Status Feedback Zone */}
+            <div className="space-y-6 pt-4">
+              {status === 'success' && (
+                <div className="p-6 bg-accent-success border-[3px] border-black shadow-[6px_6px_0px_0px_#000] flex items-center gap-4">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
+                  <div className="space-y-1">
+                    <p className="text-[0.7rem] font-black text-white uppercase tracking-[0.2em]">Success</p>
+                    <p className="font-body text-[0.9rem] font-black text-white uppercase tracking-wider">{message}</p>
                   </div>
                 </div>
-              </div>
-
-              <div>
-                {label('Description')}
-                <textarea
-                  required
-                  style={{ ...inp, minHeight: 120, resize: 'vertical' }}
-                  value={manualData.description}
-                  onChange={e => setManualData({ ...manualData, description: e.target.value })}
-                  placeholder="Describe the community need..."
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '1.5rem' }}>
-                <button type="button" onClick={handleSaveDraft} disabled={isUploading} style={secondaryBtn({ flex: 1 })}
-                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
-                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}>
-                  Save Draft
-                </button>
-                <button type="submit" disabled={isUploading} style={primaryBtn({ flex: 1 })}
-                  onMouseDown={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'translate(2px,2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0px 0px 0 #000'; }}
-                  onMouseUp={(e: React.MouseEvent<HTMLButtonElement>) => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = SHADOW; }}>
-                  {isUploading ? 'Submitting...' : 'Submit Survey'}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Status messages */}
-          {status === 'success' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: SUCC, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <CheckCircle2 style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
-              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
+              )}
+              {status === 'error' && (
+                <div className="p-6 bg-accent-critical border-[3px] border-black shadow-[6px_6px_0px_0px_#000] flex items-center gap-4">
+                  <AlertCircle className="w-8 h-8 text-white" />
+                  <div className="space-y-1">
+                    <p className="text-[0.7rem] font-black text-white uppercase tracking-[0.2em]">Critical Error</p>
+                    <p className="font-body text-[0.9rem] font-black text-white uppercase tracking-wider">{message}</p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          {status === 'error' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <AlertCircle style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
-              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
-            </div>
-          )}
-        </div>
+          </div>
         </div>
       </main>
     </div>

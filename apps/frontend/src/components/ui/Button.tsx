@@ -12,6 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'mint';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
+  shadowSize?: 'md' | 'lg';
 }
 
 const BLACK = 'var(--border-color)';
@@ -23,7 +24,7 @@ const FG    = 'var(--fg)';
 
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, children, style, ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', isLoading, shadowSize = 'md', children, style, ...props }, ref) => {
     const bgMap: Record<string, string> = {
       primary: PUR,
       secondary: YLW,
@@ -44,6 +45,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: { padding: '16px 32px', fontSize: '0.85rem' },
     };
 
+    const sOffset = shadowSize === 'lg' ? '6px' : '4px';
+
     const base: React.CSSProperties = {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900,
@@ -51,9 +54,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       backgroundColor: bgMap[variant ?? 'primary'],
       color: colorMap[variant ?? 'primary'],
       border: `2.5px solid ${BLACK}`,
-      boxShadow: `4px 4px 0px ${WHITE}`,
+      boxShadow: `${sOffset} ${sOffset} 0px ${WHITE}`,
       cursor: 'pointer',
       transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+      borderRadius: '0px',
       ...sizeMap[size ?? 'md'],
       ...style,
     };
@@ -63,9 +67,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         style={base}
         disabled={isLoading || props.disabled}
-        onMouseDown={e => { const el = e.currentTarget; el.style.transform = 'translate(4px,4px)'; el.style.boxShadow = `0px 0px 0px ${WHITE}`; }}
-        onMouseUp={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `4px 4px 0px ${WHITE}`; }}
-        onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `4px 4px 0px ${WHITE}`; }}
+        onMouseDown={e => { const el = e.currentTarget; el.style.transform = `translate(${sOffset},${sOffset})`; el.style.boxShadow = `0px 0px 0px ${WHITE}`; }}
+        onMouseUp={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `${sOffset} ${sOffset} 0px ${WHITE}`; }}
+        onMouseLeave={e => { const el = e.currentTarget; el.style.transform = 'none'; el.style.boxShadow = `${sOffset} ${sOffset} 0px ${WHITE}`; }}
         {...props}
       >
         {isLoading ? (

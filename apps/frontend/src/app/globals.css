@@ -8,7 +8,7 @@
 
 :root {
   /* Light Mode - Humanitarian Focus */
-  --bg: #F5F0E8;
+  --bg: #F2EFE9;
   --fg: #000000;
   --text: #0D0D0D;
   --text-muted: #5C5C5C;
@@ -16,29 +16,16 @@
   --shadow-color: #000000;
   --sidebar-bg: #EDE8E0;
   --header-bg: #FFFFFF;
-  --pur: #00897B;       /* Civic Teal (Primary Accent) */
-  --ylw: #FFB300;       /* Alert Amber (Secondary Accent) */
-  --accent-critical: #FF5C5C; /* Volunteer Coral */
-  --accent-success: #2E7D32;  /* Civic Green */
+  --pur: #008080;
+  /* Standardized Teal */
+  --ylw: #FFB300;
+  /* Alert Amber (Secondary Accent) */
+  --accent-critical: #FF5C5C;
+  /* Volunteer Coral */
+  --accent-success: #2E7D32;
+  /* Civic Green */
   --border-color: #000000;
   --neo-shadow: 4px 4px 0px 0px var(--shadow-color);
-}
-
-.dark {
-  /* Dark Mode - Professional Depth */
-  --bg: #111318;
-  --fg: #F0EDE6;
-  --text: #F0EDE6;
-  --text-muted: #8A8F9E;
-  --card-bg: #1C1F26;
-  --shadow-color: #FFFFFF;
-  --sidebar-bg: #0C0F14;
-  --header-bg: #1C1F26;
-  --pur: #26A69A;       /* Teal Bright */
-  --ylw: #FFC107;       /* Amber Warm */
-  --accent-critical: #FF6B6B; /* Coral Vivid */
-  --accent-success: #4CAF50;  /* Sage Green */
-  --border-color: #FFFFFF;
 }
 
 @theme {
@@ -49,7 +36,7 @@
   --color-primary: var(--pur);
   --color-secondary: var(--ylw);
   --color-border: var(--border-color);
-  
+
   --font-heading: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Space Mono', monospace;
 }
@@ -68,7 +55,12 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Plus Jakarta Sans', sans-serif;
     font-weight: 900;
     color: var(--fg);
@@ -77,9 +69,6 @@
 
 /* ── Global Utility Variables ── */
 :root {
-  --muted-fg: var(--text-muted);
-}
-.dark {
   --muted-fg: var(--text-muted);
 }
 
@@ -109,7 +98,8 @@
 
 .neo-btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0px var(--shadow-color); /* Hover state keeps slight depth */
+  box-shadow: 6px 6px 0px var(--shadow-color);
+  /* Hover state keeps slight depth */
 }
 
 .neo-btn:active {
@@ -194,7 +184,9 @@
   transform: translate(-2px, -2px);
 }
 
-.neo-border { border: 2.5px solid var(--border-color) !important; }
+.neo-border {
+  border: 2.5px solid var(--border-color) !important;
+}
 
 .glass-nav {
   background-color: var(--bg);
@@ -203,8 +195,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* =============================================
@@ -337,6 +334,7 @@
    TABLET: 768px – 1024px
    ============================================= */
 @media (max-width: 1024px) {
+
   .neo-card-full,
   .neo-card-full-deep {
     padding: 1.5rem;
@@ -351,6 +349,7 @@
    MOBILE: < 768px
    ============================================= */
 @media (max-width: 767px) {
+
   /* Layout: hide sidebar, add top padding for hamburger */
   .page-layout {
     flex-direction: column;
@@ -381,7 +380,8 @@
 
   .neo-main {
     padding: 16px;
-    padding-top: 88px; /* 64px header + 24px spacing */
+    padding-top: 88px;
+    /* 64px header + 24px spacing */
   }
 
   /* Containers: 16px margins (calc(100% - 32px)), scale-down shadows to 4px 4px */
@@ -427,7 +427,11 @@
   }
 
   /* Touch target enforcement */
-  button, a, input, select, textarea {
+  button,
+  a,
+  input,
+  select,
+  textarea {
     min-height: 48px;
   }
 

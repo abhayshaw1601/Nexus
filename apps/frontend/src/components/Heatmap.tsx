@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useTheme } from 'next-themes';
 
 // Import leaflet.heat dynamically or via side-effect
 if (typeof window !== 'undefined') {
@@ -30,7 +29,6 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
   const heatmapLayerRef = useRef<any>(null);
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
-  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current || leafletMap.current) return;
@@ -47,9 +45,7 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
   useEffect(() => {
     if (!leafletMap.current) return;
 
-    const themeTiles = resolvedTheme === 'dark' 
-      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    const themeTiles = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
 
     // Remove existing tile layers
     leafletMap.current.eachLayer((layer: any) => {
@@ -58,7 +54,7 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
 
     L.tileLayer(themeTiles).addTo(leafletMap.current);
 
-  }, [resolvedTheme]);
+  }, []);
 
   useEffect(() => {
     if (leafletMap.current && centerLocation) {
