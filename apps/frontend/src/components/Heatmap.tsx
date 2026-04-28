@@ -16,6 +16,13 @@ interface Task {
   location: {
     coordinates: [number, number];
   };
+  status: string;
+  assignedVolunteerId?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  description?: string;
 }
 
 interface HeatmapProps {
@@ -29,6 +36,7 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
   const heatmapLayerRef = useRef<any>(null);
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
   const accuracyCircleRef = useRef<L.Circle | null>(null);
+  const taskMarkersRef = useRef<L.Marker[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !mapRef.current || leafletMap.current) return;
@@ -92,6 +100,167 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
       }
     }).addTo(leafletMap.current);
 
+  }, [tasks]);
+
+  // Add markers for ASSIGNED tasks showing volunteer info
+  useEffect(() => {
+    if (!leafletMap.current) return;
+
+    // Remove previous task markers
+    taskMarkersRef.current.forEach(marker => marker.remove());
+    taskMarkersRef.current = [];
+
+    // Filter for assigned tasks
+    const assignedTasks = tasks.filter(task => 
+      task.status === 'ASSIGNED' && task.assignedVolunteerId
+    );
+
+    // Create custom icon for assigned tasks
+    const assignedIcon = L.divIcon({
+      className: 'custom-assigned-marker',
+      html: `
+        <div style="position: relative;">
+          <div style="
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+            border: 3px solid #000;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), 0 0 0 4px rgba(139, 92, 246, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse-assigned 2s infinite;
+          ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+        </div>
+        <style>
+          @keyframes pulse-assigned {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+          }
+        </style>
+      `,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -16]
+    });
+
+    // Add markers for each assigned task
+    assignedTasks.forEach(task => {
+      const [lng, lat] = task.location.coordinates;
+      const marker = L.marker([lat, lng], { 
+        icon: assignedIcon,
+        zIndexOffset: 2000 // Ensure markers appear above heatmap
+      });
+
+      // Create popup content
+      const popupContent = `
+        <div style="font-family: 'Plus Jakarta Sans', sans-serif; min-width: 200px;">
+          <div style="
+            background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+            color: white;
+            padding: 8px 12px;
+            margin: -10px -10px 10px -10px;
+            border-bottom: 2px solid #000;
+          ">
+            <p style="
+              margin: 0;
+              font-size: 10px;
+              font-weight: 900;
+              text-transform: uppercase;
+              letter-spacing: 0.1em;
+              opacity: 0.9;
+            ">Task Assigned</p>
+          </div>
+          
+          <div style="padding: 4px 0;">
+            <p style="
+              margin: 0 0 8px 0;
+              font-size: 11px;
+              font-weight: 700;
+              color: #666;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            ">Volunteer</p>
+            <p style="
+              margin: 0 0 12px 0;
+              font-size: 14px;
+              font-weight: 900;
+              color: #000;
+            ">${task.assignedVolunteerId?.name || 'Unknown'}</p>
+            
+            <p style="
+              margin: 0 0 4px 0;
+              font-size: 11px;
+              font-weight: 700;
+              color: #666;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            ">Category</p>
+            <p style="
+              margin: 0 0 12px 0;
+              font-size: 13px;
+              font-weight: 700;
+              color: #8B5CF6;
+            ">${task.category}</p>
+            
+            ${task.description ? `
+              <p style="
+                margin: 0 0 4px 0;
+                font-size: 11px;
+                font-weight: 700;
+                color: #666;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              ">Description</p>
+              <p style="
+                margin: 0;
+                font-size: 12px;
+                font-weight: 500;
+                color: #333;
+                line-height: 1.4;
+              ">${task.description.substring(0, 100)}${task.description.length > 100 ? '...' : ''}</p>
+            ` : ''}
+          </div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent, {
+        maxWidth: 300,
+        className: 'custom-popup'
+      });
+
+      marker.addTo(leafletMap.current!);
+      taskMarkersRef.current.push(marker);
+    });
+
+    // Add custom popup styles
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .custom-popup .leaflet-popup-content-wrapper {
+        border: 3px solid #000;
+        border-radius: 8px;
+        box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+        padding: 10px;
+      }
+      .custom-popup .leaflet-popup-tip {
+        border: 2px solid #000;
+      }
+    `;
+    if (!document.getElementById('custom-popup-styles')) {
+      style.id = 'custom-popup-styles';
+      document.head.appendChild(style);
+    }
+
+    return () => {
+      taskMarkersRef.current.forEach(marker => marker.remove());
+      taskMarkersRef.current = [];
+    };
   }, [tasks]);
 
   useEffect(() => {
@@ -206,6 +375,23 @@ const LeafletHeatmap: React.FC<HeatmapProps> = ({ tasks, centerLocation }) => {
             <div className="flex-1 h-2 rounded-[1px] bg-urgency-3" />
             <div className="flex-1 h-2 rounded-[1px] bg-urgency-4" />
             <div className="flex-1 h-2 rounded-[1px] bg-urgency-5" />
+          </div>
+        </div>
+
+        {/* Legend for assigned tasks */}
+        <div className="pt-3 border-t border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <div style={{
+              width: 16,
+              height: 16,
+              background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+              border: '2px solid #000',
+              borderRadius: '50%',
+              flexShrink: 0
+            }} />
+            <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">
+              Assigned
+            </span>
           </div>
         </div>
 

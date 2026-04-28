@@ -28,6 +28,8 @@ export default function DashboardPage() {
   const [isOnDuty, setIsOnDuty] = useState(false);
   const [isLoadingTasks, setIsLoadingTasks] = useState(false);
   const [taskError, setTaskError] = useState<string | null>(null);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [navigatingToTask, setNavigatingToTask] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,7 +59,16 @@ export default function DashboardPage() {
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         headers: { Authorization: `Bearer ${user?.accessToken}` }
       });
+      console.log('[Dashboard] Fetched tasks:', res.data);
       setTasks(res.data);
+
+      // Check if volunteer has an active task
+      if (user?.role === 'VOLUNTEER') {
+        const activeTask = res.data.find((t: any) => 
+          t.status === 'ASSIGNED' && t.assignedVolunteerId?._id === user?.id
+        );
+        setActiveTaskId(activeTask?._id || null);
+      }
     } catch (err: any) {
       console.error("Failed to fetch tasks:", err.response?.data || err.message);
       setTaskError(err.response?.data?.message || err.message || 'Failed to load tasks');
@@ -71,10 +82,56 @@ export default function DashboardPage() {
       await axios.put(`${process.env.NEXT_PUBLIC_API_URL}/tasks/${taskId}/accept`, {}, {
         headers: { Authorization: `Bearer ${user?.accessToken}` }
       });
+      setActiveTaskId(taskId);
       fetchTasks(); // Refresh
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to accept task');
     }
+  };
+
+  const handleNavigateToTask = (task: any) => {
+    if (!("geolocation" in navigator)) {
+      alert("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setNavigatingToTask(task._id);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        const [taskLng, taskLat] = task.location.coordinates;
+
+        // Calculate distance using Haversine formula
+        const R = 6371; // Earth's radius in km
+        const dLat = (taskLat - userLat) * Math.PI / 180;
+        const dLng = (taskLng - userLng) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(userLat * Math.PI / 180) * Math.cos(taskLat * Math.PI / 180) *
+          Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+
+        // Open Google Maps with directions
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${taskLat},${taskLng}&travelmode=driving`;
+        
+        // Show distance alert
+        alert(`Distance to task: ${distance.toFixed(2)} km\n\nOpening Google Maps for navigation...`);
+        
+        // Open in new tab
+        window.open(mapsUrl, '_blank');
+        
+        setNavigatingToTask(null);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        alert("Unable to get your location. Please enable location services.");
+        setNavigatingToTask(null);
+      },
+      { enableHighAccuracy: true }
+    );
   };
 
   const handleLocateTask = (task: any) => {
@@ -282,21 +339,23 @@ export default function DashboardPage() {
                 <p style={{ ...S.cardLabel, color:'var(--muted-fg)', marginBottom:4 }}>Global Intelligence</p>
                 <h2 style={S.mapTitle}>Geospatial [Heatmap]</h2>
               </div>
-              <div style={{ display:'flex', gap:12, width: '100%', maxWidth: '400px' }}>
-                <input 
-                  placeholder="Lat, Lng  e.g. 12.97, 77.59" 
-                  style={{ ...S.searchInput, flex: 1 }}
-                  value={searchCoords}
-                  onChange={(e) => setSearchCoords(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                />
-                <Button size="sm" onClick={handleSearch}>Search</Button>
-              </div>
+              {user.role !== 'VOLUNTEER' && (
+                <div style={{ display:'flex', gap:12, width: '100%', maxWidth: '400px' }}>
+                  <input 
+                    placeholder="Lat, Lng  e.g. 12.97, 77.59" 
+                    style={{ ...S.searchInput, flex: 1 }}
+                    value={searchCoords}
+                    onChange={(e) => setSearchCoords(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                  <Button size="sm" onClick={handleSearch}>Search</Button>
+                </div>
+              )}
             </div>
             <div className="map-container" style={{ flex:1, border:`2.5px solid ${BLACK}`, boxShadow:`4px 4px 0px ${WHITE}`, position:'relative', overflow:'hidden', minHeight: '300px' }}>
-            {/* ── VOLUNTEER MAP (Fix: pass isOnDuty not center) ── */}
+            {/* ── VOLUNTEER MAP with heatmap support ── */}
               {user.role === 'VOLUNTEER' ? (
-                <VolunteerMap isOnDuty={isOnDuty} />
+                <VolunteerMap isOnDuty={isOnDuty} tasks={tasks} centerLocation={centerLocation} />
               ) : (
                 <MapboxHeatmap tasks={tasks} centerLocation={centerLocation} />
               )}
@@ -394,16 +453,89 @@ export default function DashboardPage() {
                           <span style={statusStyle(task.status)}>{task.status}</span>
                         </td>
                         <td style={{ ...S.td, borderRight: 'none' }}>
-                          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            {/* Volunteer: Accept OPEN tasks */}
+                          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                            {/* Volunteer: Accept OPEN tasks (only if no active task) */}
                             {user.role === 'VOLUNTEER' && task.status === 'OPEN' && (
                               <button
                                 onClick={() => handleAcceptTask(task._id)}
-                                title="Accept Task"
-                                style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'Plus Jakarta Sans',sans-serif", fontWeight:900, fontSize:'0.55rem', textTransform:'uppercase', letterSpacing:'0.1em', padding:'4px 10px', backgroundColor:'var(--pur)', color:'#fff', border:`2px solid var(--border-color)`, boxShadow:`2px 2px 0 var(--shadow-color)`, cursor:'pointer' }}
+                                disabled={!!activeTaskId}
+                                title={activeTaskId ? "Complete your current task first" : "Accept Task"}
+                                style={{ 
+                                  display:'flex', 
+                                  alignItems:'center', 
+                                  gap:4, 
+                                  fontFamily:"'Plus Jakarta Sans',sans-serif", 
+                                  fontWeight:900, 
+                                  fontSize:'0.55rem', 
+                                  textTransform:'uppercase', 
+                                  letterSpacing:'0.1em', 
+                                  padding:'4px 10px', 
+                                  backgroundColor: activeTaskId ? 'var(--muted-fg)' : 'var(--pur)', 
+                                  color:'#fff', 
+                                  border:`2px solid var(--border-color)`, 
+                                  boxShadow:`2px 2px 0 var(--shadow-color)`, 
+                                  cursor: activeTaskId ? 'not-allowed' : 'pointer',
+                                  opacity: activeTaskId ? 0.5 : 1
+                                }}
                               >
                                 <CheckCircle2 style={{ width:12, height:12 }} /> Accept
                               </button>
+                            )}
+                            {/* Volunteer: Navigate to ASSIGNED task */}
+                            {user.role === 'VOLUNTEER' && task.status === 'ASSIGNED' && task.assignedVolunteerId?._id === user?.id && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    console.log('Navigate clicked - Task:', task._id, 'Assigned to:', task.assignedVolunteerId?._id, 'Current user:', user?.id);
+                                    handleNavigateToTask(task);
+                                  }}
+                                  disabled={navigatingToTask === task._id}
+                                  title="Navigate to task location"
+                                  style={{ 
+                                    display:'flex', 
+                                    alignItems:'center', 
+                                    gap:4, 
+                                    fontFamily:"'Plus Jakarta Sans',sans-serif", 
+                                    fontWeight:900, 
+                                    fontSize:'0.55rem', 
+                                    textTransform:'uppercase', 
+                                    letterSpacing:'0.1em', 
+                                    padding:'4px 10px', 
+                                    backgroundColor:'var(--accent-success)', 
+                                    color:'#fff', 
+                                    border:`2px solid var(--border-color)`, 
+                                    boxShadow:`2px 2px 0 var(--shadow-color)`, 
+                                    cursor:'pointer' 
+                                  }}
+                                >
+                                  <Navigation style={{ width:12, height:12 }} /> Navigate
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    // Navigate to completion report page
+                                    router.push(`/tasks/complete/${task._id}`);
+                                  }}
+                                  title="Mark task as completed"
+                                  style={{ 
+                                    display:'flex', 
+                                    alignItems:'center', 
+                                    gap:4, 
+                                    fontFamily:"'Plus Jakarta Sans',sans-serif", 
+                                    fontWeight:900, 
+                                    fontSize:'0.55rem', 
+                                    textTransform:'uppercase', 
+                                    letterSpacing:'0.1em', 
+                                    padding:'4px 10px', 
+                                    backgroundColor:'#10b981', 
+                                    color:'#fff', 
+                                    border:`2px solid var(--border-color)`, 
+                                    boxShadow:`2px 2px 0 var(--shadow-color)`, 
+                                    cursor:'pointer' 
+                                  }}
+                                >
+                                  <CheckCircle2 style={{ width:12, height:12 }} /> Complete
+                                </button>
+                              </>
                             )}
                             {/* All roles: Locate task on map */}
                             <button
@@ -458,6 +590,112 @@ export default function DashboardPage() {
                             <span style={statusStyle(task.status)}>{task.status}</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Mobile Action Buttons */}
+                      <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                        {user.role === 'VOLUNTEER' && task.status === 'OPEN' && (
+                          <button
+                            onClick={() => handleAcceptTask(task._id)}
+                            disabled={!!activeTaskId}
+                            title={activeTaskId ? "Complete your current task first" : "Accept Task"}
+                            style={{ 
+                              flex: 1,
+                              padding: '10px 16px', 
+                              background: activeTaskId ? 'var(--muted-fg)' : 'var(--pur)', 
+                              border: `2px solid ${BLACK}`, 
+                              cursor: activeTaskId ? 'not-allowed' : 'pointer', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              gap: 6, 
+                              boxShadow: `3px 3px 0px 0px #000`, 
+                              fontFamily: "'Plus Jakarta Sans',sans-serif", 
+                              fontWeight: 900, 
+                              fontSize: '0.65rem', 
+                              color: '#fff', 
+                              textTransform: 'uppercase',
+                              opacity: activeTaskId ? 0.5 : 1
+                            }}
+                          >
+                            <CheckCircle2 style={{ width: 16, height: 16 }} /> Accept
+                          </button>
+                        )}
+                        {user.role === 'VOLUNTEER' && task.status === 'ASSIGNED' && task.assignedVolunteerId?._id === user?.id && (
+                          <>
+                            <button 
+                              onClick={() => handleNavigateToTask(task)} 
+                              disabled={navigatingToTask === task._id}
+                              style={{ 
+                                flex: 1,
+                                padding: '10px 16px', 
+                                background: 'var(--accent-success)', 
+                                border: `2px solid ${BLACK}`, 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 6, 
+                                boxShadow: `3px 3px 0px 0px #000`, 
+                                fontFamily: "'Plus Jakarta Sans',sans-serif", 
+                                fontWeight: 900, 
+                                fontSize: '0.65rem', 
+                                color: '#fff', 
+                                textTransform: 'uppercase' 
+                              }}
+                            >
+                              <Navigation style={{ width: 16, height: 16 }} /> Navigate
+                            </button>
+                            <button 
+                              onClick={() => {
+                                // Navigate to completion report page
+                                router.push(`/tasks/complete/${task._id}`);
+                              }}
+                              style={{ 
+                                flex: 1,
+                                padding: '10px 16px', 
+                                background: '#10b981', 
+                                border: `2px solid ${BLACK}`, 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 6, 
+                                boxShadow: `3px 3px 0px 0px #000`, 
+                                fontFamily: "'Plus Jakarta Sans',sans-serif", 
+                                fontWeight: 900, 
+                                fontSize: '0.65rem', 
+                                color: '#fff', 
+                                textTransform: 'uppercase' 
+                              }}
+                            >
+                              <CheckCircle2 style={{ width: 16, height: 16 }} /> Complete
+                            </button>
+                          </>
+                        )}
+                        <button 
+                          onClick={() => handleLocateTask(task)} 
+                          style={{ 
+                            flex: user.role === 'VOLUNTEER' && (task.status === 'OPEN' || (task.status === 'ASSIGNED' && task.assignedVolunteerId?._id === user?.id)) ? 0 : 1,
+                            minWidth: '100px',
+                            padding: '10px 16px', 
+                            background: 'var(--ylw)', 
+                            border: `2px solid ${BLACK}`, 
+                            cursor: 'pointer', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            gap: 6, 
+                            boxShadow: `3px 3px 0px 0px #000`, 
+                            fontFamily: "'Plus Jakarta Sans',sans-serif", 
+                            fontWeight: 900, 
+                            fontSize: '0.65rem', 
+                            color: '#000', 
+                            textTransform: 'uppercase' 
+                          }}
+                        >
+                          <MapPin style={{ width: 16, height: 16 }} /> Locate
+                        </button>
                       </div>
                     </div>
                   ))

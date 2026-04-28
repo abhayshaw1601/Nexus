@@ -1,5 +1,6 @@
 import User from '../models/User';
 import { Server } from 'socket.io';
+import mongoose from 'mongoose';
 
 interface CrisisData {
   id: string;
@@ -7,6 +8,7 @@ interface CrisisData {
   category: string;
   urgencyScore: number;
   coordinates: [number, number]; // [longitude, latitude]
+  ngoId: mongoose.Types.ObjectId; // Organization that raised the issue
 }
 
 export const notifyNearbyVolunteers = async (io: Server, crisisData: CrisisData) => {
@@ -14,10 +16,17 @@ export const notifyNearbyVolunteers = async (io: Server, crisisData: CrisisData)
     // MongoDB $near query to find volunteers within 20km
     const maxDistanceInMeters = 20000; // 20km
 
+    // Find volunteers that match ALL criteria:
+    // 1. Assigned to the same organization (ngoId)
+    // 2. On-duty and verified
+    // 3. Within 20km radius
+    // 4. Have matching skills (category matches their skills array)
     const nearbyVolunteers = await User.find({
       role: 'VOLUNTEER',
+      ngoId: crisisData.ngoId, // Only volunteers from the same organization
       isOnDuty: true,
       isVerified: true,
+      skills: crisisData.category, // Skill must match the issue category (e.g., Medical, Sanitation)
       lastLocation: {
         $near: {
           $geometry: {
@@ -29,7 +38,7 @@ export const notifyNearbyVolunteers = async (io: Server, crisisData: CrisisData)
       }
     });
 
-    console.log(`Found ${nearbyVolunteers.length} nearby on-duty volunteers for crisis: ${crisisData.name}`);
+    console.log(`Found ${nearbyVolunteers.length} nearby on-duty volunteers with matching skills (${crisisData.category}) for crisis: ${crisisData.name}`);
 
     // Emit notification to each volunteer's personal room
     nearbyVolunteers.forEach(volunteer => {
@@ -40,7 +49,7 @@ export const notifyNearbyVolunteers = async (io: Server, crisisData: CrisisData)
         urgencyScore: crisisData.urgencyScore,
         coordinates: crisisData.coordinates
       });
-      console.log(`Sent crisis alert to volunteer: ${volunteer.name} (${volunteer._id})`);
+      console.log(`Sent crisis alert to volunteer: ${volunteer.name} (${volunteer._id}) - Skills: ${volunteer.skills.join(', ')}`);
     });
 
     return nearbyVolunteers.length;
