@@ -134,9 +134,9 @@ export default function NewSurveyPage() {
 
 
   return (
-    <div className="page-layout">
+    <div className="page-layout" style={{ height: '100vh', overflow: 'hidden' }}>
       <Sidebar />
-      <main className="neo-main" style={{ width: '100%', overflowX: 'hidden' }}>
+      <main className="neo-main" style={{ flex: 1, height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ width: 'min(100%, 1200px)', margin: '0 auto', paddingBottom: '4rem' }}>
 
           {/* Header Row */}
@@ -228,10 +228,16 @@ export default function NewSurveyPage() {
                       <Button
                         type="submit"
                         disabled={!file || isUploading}
-                        size="lg"
-                        className="w-full h-[56px] text-[0.8rem] border-[3px] border-black shadow-[4px_4px_0px_0px_#000] font-black"
+                        size="md"
+                        shadowSize="sm"
+                        className="w-full h-[56px] text-[0.75rem] border-[3px] border-black font-black"
                         isLoading={isUploading}
-                        style={{ backgroundColor: '#008080', color: 'white' }}
+                        style={{ 
+                          backgroundColor: '#008080', 
+                          color: 'white',
+                          padding: '14px 20px',
+                          border: '3px solid var(--border-color)'
+                        }}
                       >
                         Initialize AI OCR Extraction
                       </Button>

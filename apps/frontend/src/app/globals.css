@@ -52,12 +52,6 @@
     background-color: var(--bg);
     overflow-x: hidden;
     height: -webkit-fill-available;
-    scrollbar-width: none;
-    /* Hide default scrollbar */
-  }
-
-  html::-webkit-scrollbar {
-    display: none;
   }
 
   body {

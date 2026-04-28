@@ -12,7 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'mint';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  shadowSize?: 'md' | 'lg';
+  shadowSize?: 'sm' | 'md' | 'lg';
 }
 
 const BLACK = 'var(--border-color)';
@@ -45,7 +45,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: { padding: '16px 32px', fontSize: '0.85rem' },
     };
 
-    const sOffset = shadowSize === 'lg' ? '8px' : '6px';
+    const sOffset = shadowSize === 'lg' ? '8px' : shadowSize === 'md' ? '6px' : '4px';
 
     const base: React.CSSProperties = {
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -65,6 +65,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
+        className={cn(className)}
         style={base}
         disabled={isLoading || props.disabled}
         onMouseDown={e => { const el = e.currentTarget; el.style.transform = `translate(${sOffset},${sOffset})`; el.style.boxShadow = `0px 0px 0px ${WHITE}`; }}

@@ -49,9 +49,9 @@ export default function NGOOnboarding() {
   };
 
   return (
-    <div className="flex min-h-[100dvh] bg-background overflow-y-auto">
+    <div className="flex h-[100vh] bg-background overflow-hidden">
       <Sidebar />
-      <main className="flex-1 p-4 pt-[88px] md:p-8">
+      <main className="flex-1 p-4 pt-[88px] md:p-8 overflow-y-auto h-[100vh]">
         <div className="max-w-[800px] mx-auto my-8">
           <div className="px-4 md:px-0 mb-10">
             <h2 className="text-4xl font-black text-foreground tracking-tighter uppercase">
