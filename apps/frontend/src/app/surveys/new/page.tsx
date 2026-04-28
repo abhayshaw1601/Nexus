@@ -205,376 +205,244 @@ export default function NewSurveyPage() {
       <main className="neo-main" style={{ flex: 1, height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}>
         <div style={{ width: 'min(100%, 1200px)', margin: '0 auto', paddingBottom: '4rem' }}>
 
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
-          <div>
-            <h1 className="page-title">Add Community Data</h1>
-            <p className="page-subtitle">Upload a paper survey for AI processing or enter data manually.</p>
-          </div>
-          <Link href="/dashboard">
-            <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-              ← Back to Dashboard
-            </button>
-          </Link>
-        </div>
-
-<<<<<<< HEAD
-        {/* Tabs */}
-        <div className="tab-switcher">
-          {(['ai', 'manual'] as const).map((tab) => (
-            <button key={tab}
-              onClick={() => { setActiveTab(tab); setShowForm(false); resetForm(); setStatus('idle'); }}
-              style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
-            >
-              {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
-            </button>
-          ))}
-        </div>
-
-        <div className="neo-card-full">
-
-          {/* ── AI Tab ── */}
-          {activeTab === 'ai' && (
-            <form onSubmit={handleFileUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
-                style={{ border: `2.5px dashed ${isDragging ? PUR : BLACK}`, backgroundColor: isDragging ? 'rgba(0,137,123,0.1)' : 'var(--bg)', padding: '4rem', textAlign: 'center', transition: 'all 0.15s' }}
-              >
-                <UploadCloud style={{ margin: '0 auto 1rem', width: 48, height: 48, color: isDragging ? PUR : 'var(--muted-fg)', strokeWidth: 1.5 }} />
-                <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.85rem', color: 'var(--muted-fg)', marginBottom: 8 }}>
-                  <label htmlFor="file-upload" style={{ cursor: 'pointer', fontWeight: 700, color: FG, textDecoration: 'underline' }}>
-                    Upload a file
-                    <input id="file-upload" type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
-                  </label>
-                  {' '}or drag and drop
-                </div>
-                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)' }}>PNG, JPG, GIF up to 5MB</p>
-                {file && <p style={{ marginTop: 12, fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: SUCC }}>Selected: {file.name}</p>}
-              </div>
-              <button type="submit" disabled={!file || isUploading}
-                style={{ ...primaryBtn({ maxWidth: 400, margin: '0 auto' }), opacity: (!file || isUploading) ? 0.5 : 1 }}
-                onMouseDown={pressDown} onMouseUp={pressUp}>
-                {isUploading ? 'Processing...' : 'Process with AI'}
-              </button>
-            </form>
-          )}
-
-          {/* ── Manual Tab ── */}
-          {activeTab === 'manual' && (
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem', paddingBottom: '1.5rem', borderBottom: `2.5px solid ${BLACK}` }}>
             <div>
-              {!showForm ? (
-                /* LIST VIEW */
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: FG, margin: 0 }}>My Reports</p>
-                      <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)', margin: '4px 0 0' }}>
-                        {myReports.length} record{myReports.length !== 1 ? 's' : ''} found
-=======
-          {/* Master Card Container */}
-          <div className="neo-card-full-deep" style={{
-            backgroundColor: 'white',
-            border: '2px solid black',
-            boxShadow: '8px 8px 0px 0px #000',
-            padding: '2.5rem',
-            marginTop: '2rem'
-          }}>
-
-            {/* Segmented Tab Control */}
-            <div className="flex border-[3px] border-black shadow-[4px_4px_0px_0px_#000] bg-black mb-10">
-              {(['ai', 'manual'] as const).map((tab, idx) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{ cursor: 'pointer' }}
-                  className={`flex-1 py-5 text-[0.8rem] font-black uppercase tracking-[0.15em] transition-all border-none outline-none ${activeTab === tab
-                    ? 'bg-[#008080] text-white'
-                    : 'bg-white text-black hover:bg-[#F2EFE9]'
-                    } ${idx === 0 ? 'border-r-[3px] border-black' : ''}`}
-                >
-                  {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
-                </button>
-              ))}
+              <h1 className="page-title">Add Community Data</h1>
+              <p className="page-subtitle">Upload a paper survey for AI processing or enter data manually.</p>
             </div>
+            <Link href="/dashboard">
+              <button style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: PUR, color: '#FFFFFF', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '10px 20px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                ← Back to Dashboard
+              </button>
+            </Link>
+          </div>
 
-            {/* ─ AI Upload Section ─ */}
+          {/* Tabs */}
+          <div className="tab-switcher">
+            {(['ai', 'manual'] as const).map((tab) => (
+              <button key={tab}
+                onClick={() => { setActiveTab(tab); setShowForm(false); resetForm(); setStatus('idle'); }}
+                style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', padding: '12px 32px', backgroundColor: activeTab === tab ? PUR : 'var(--bg)', color: activeTab === tab ? '#FFFFFF' : FG, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, transform: activeTab === tab ? 'translate(2px,2px)' : 'none', cursor: 'pointer', flex: 1 }}
+              >
+                {tab === 'ai' ? 'AI OCR Upload' : 'Manual Entry'}
+              </button>
+            ))}
+          </div>
+
+          <div className="neo-card-full">
+
+            {/* ── AI Tab ── */}
             {activeTab === 'ai' && (
-              <form onSubmit={handleFileUpload} className="space-y-10">
+              <form onSubmit={handleFileUpload} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 <div
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                   onDragLeave={() => setIsDragging(false)}
                   onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); }}
-                  className={`w-full border-[3px] border-dashed p-16 text-center transition-all ${isDragging ? 'border-[#008080] bg-[#008080]/5' : 'border-black bg-[#F2EFE9]/30'
-                    }`}
+                  style={{ border: `2.5px dashed ${isDragging ? PUR : BLACK}`, backgroundColor: isDragging ? 'rgba(0,137,123,0.1)' : 'var(--bg)', padding: '4rem', textAlign: 'center', transition: 'all 0.15s' }}
                 >
-                  <UploadCloud className={`mx-auto mb-6 w-16 h-16 stroke-[1.5pt] ${isDragging ? 'text-[#008080]' : 'text-black/40'}`} />
-                  <div className="font-body text-[0.9rem] text-black/60 mb-3 flex flex-col items-center gap-2">
-                    <label htmlFor="file-upload" className="cursor-pointer font-bold text-black underline decoration-2 underline-offset-4 hover:text-[#008080] transition-colors">
-                      Browse Local Files
-                      <input id="file-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                  <UploadCloud style={{ margin: '0 auto 1rem', width: 48, height: 48, color: isDragging ? PUR : 'var(--muted-fg)', strokeWidth: 1.5 }} />
+                  <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.85rem', color: 'var(--muted-fg)', marginBottom: 8 }}>
+                    <label htmlFor="file-upload" style={{ cursor: 'pointer', fontWeight: 700, color: FG, textDecoration: 'underline' }}>
+                      Upload a file
+                      <input id="file-upload" type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => { if (e.target.files?.[0]) setFile(e.target.files[0]); }} />
                     </label>
-                    <span className="text-[0.7rem] uppercase font-black tracking-widest">or drag and drop survey here</span>
+                    {' '}or drag and drop
                   </div>
-                  <p className="font-body text-[0.7rem] font-bold text-black/40 uppercase tracking-wider">PNG, JPG, PDF up to 10MB</p>
-
-                  {file && (
-                    <div className="mt-8 p-3 bg-accent-success/10 border-2 border-accent-success inline-block">
-                      <p className="font-body text-[0.8rem] font-black text-accent-success uppercase tracking-wider">
-                        Ready: {file.name}
->>>>>>> 2a3da8a4bafc9095b2e627925177f443062db64e
-                      </p>
-                    </div>
-                    <button onClick={() => { resetForm(); setShowForm(true); }}
-                      style={primaryBtn({ width: 'auto', padding: '12px 20px' })}
-                      onMouseDown={pressDown} onMouseUp={pressUp}>
-                      <Plus style={{ width: 16, height: 16 }} /> Add New Report
-                    </button>
-                  </div>
-
-                  {loadingReports ? (
-                    <div style={{ textAlign: 'center', padding: '3rem', fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', color: 'var(--muted-fg)' }}>Loading reports...</div>
-                  ) : myReports.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '4rem 2rem', border: `2.5px dashed ${BLACK}` }}>
-                      <FileText style={{ margin: '0 auto 1rem', width: 40, height: 40, color: 'var(--muted-fg)' }} />
-                      <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase', color: FG, margin: '0 0 6px' }}>No Reports Yet</p>
-                      <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)', margin: 0 }}>Click "Add New Report" to create your first report.</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {myReports.map((report) => {
-                        const sc = STATUS_COLORS[report.status] || { bg: BLACK, color: '#fff' };
-                        return (
-                          <div key={report._id} style={{ backgroundColor: 'var(--bg)', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.95rem', color: FG, margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {report.title || report.description?.slice(0, 60) || 'Untitled Report'}
-                              </p>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.6rem', backgroundColor: sc.bg, color: sc.color, padding: '2px 8px', border: `1.5px solid ${BLACK}`, fontWeight: 700 }}>
-                                  {report.status}
-                                </span>
-                                {report.category && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.category}</span>}
-                                {report.urgency && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>Urgency {report.urgency}/5</span>}
-                                {report.affectedPeople != null && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>~{report.affectedPeople} affected</span>}
-                                {report.imageUrls?.length > 0 && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.imageUrls.length} image{report.imageUrls.length !== 1 ? 's' : ''}</span>}
-                                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{new Date(report.createdAt).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                            {report.status === 'DRAFT' && (
-                              <button onClick={() => openEdit(report)}
-                                style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '8px 16px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
-                                onMouseDown={(e) => pressDown(e, '0px 0px 0 #000')} onMouseUp={(e) => pressUp(e, `3px 3px 0 ${WHITE}`)}>
-                                Edit Draft
-                              </button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                  <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)' }}>PNG, JPG, GIF up to 5MB</p>
+                  {file && <p style={{ marginTop: 12, fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: SUCC }}>Selected: {file.name}</p>}
                 </div>
-<<<<<<< HEAD
-              ) : (
-                /* FORM VIEW */
-                <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <button type="button" onClick={() => { setShowForm(false); resetForm(); setStatus('idle'); }}
-                    style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'transparent', color: FG, border: `2px solid ${BLACK}`, padding: '8px 16px', cursor: 'pointer', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <ChevronLeft style={{ width: 14, height: 14 }} /> Back to Reports
-=======
-
-                <div className="p-10 bg-[#F2EFE9]/50 border-[3px] border-black shadow-[8px_8px_0px_0px_#000] space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
-                    <div className="space-y-3">
-                      <label className="text-[0.75rem] font-black uppercase tracking-[0.2em] text-black/60 block px-1">
-                        Select Document Language
-                      </label>
-                      <LanguageSelector />
-                    </div>
-                    <div className="space-y-3">
-                       <label className="text-[0.75rem] font-black uppercase tracking-[0.2em] text-black/60 block px-1 invisible md:visible">
-                        Action
-                      </label>
-                      <Button
-                        type="submit"
-                        disabled={!file || isUploading}
-                        size="md"
-                        shadowSize="sm"
-                        className="w-full h-[56px] text-[0.75rem] border-[3px] border-black font-black"
-                        isLoading={isUploading}
-                        style={{ 
-                          backgroundColor: '#008080', 
-                          color: 'white',
-                          padding: '14px 20px',
-                          border: '3px solid var(--border-color)'
-                        }}
-                      >
-                        Initialize AI OCR Extraction
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t-2 border-black/5">
-                    <p className="text-[0.65rem] font-bold text-black/50 uppercase tracking-[0.15em] text-center leading-relaxed">
-                      AI will automatically detect layout and extract handwriting<br className="hidden md:block" /> based on the selected document language
-                    </p>
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {lbl('Document Language')}
+                  <LanguageSelector />
                 </div>
+                <button type="submit" disabled={!file || isUploading}
+                  style={{ ...primaryBtn({ maxWidth: 400, margin: '0 auto' }), opacity: (!file || isUploading) ? 0.5 : 1 }}
+                  onMouseDown={pressDown} onMouseUp={pressUp}>
+                  {isUploading ? 'Processing...' : 'Process with AI'}
+                </button>
               </form>
             )}
 
-            {/* ─ Manual Entry Form ─ */}
+            {/* ── Manual Tab ── */}
             {activeTab === 'manual' && (
-              <form onSubmit={handleManualSubmit} className="space-y-10">
-
-                {/* Standardized Control Group: Category & Urgency */}
-                <div className="flex flex-col md:flex-row gap-8 justify-between">
-                  <div className="flex-1 space-y-4">
-                    <label className="text-[0.75rem] font-black uppercase tracking-[0.1em] text-black/60 block">Category</label>
-                    <select
-                      className="flex h-[56px] w-full rounded-none border-[3px] border-black bg-white px-4 py-2 text-sm text-black focus:outline-none focus:ring-4 focus:ring-[#008080]/10 transition-all font-bold appearance-none cursor-pointer"
-                      style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'black\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'3\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1.2em' }}
-                      value={manualData.category}
-                      onChange={e => setManualData({ ...manualData, category: e.target.value })}
-                    >
-                      {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Other'].map(c => <option key={c}>{c}</option>)}
-                    </select>
-                  </div>
-
-                  <div className="flex-1">
-                    <Input
-                      label="Urgency Level (1-5)"
-                      type="number"
-                      min="1"
-                      max="5"
-                      required
-                      value={manualData.urgencyScore}
-                      onChange={e => setManualData({ ...manualData, urgencyScore: e.target.value })}
-                      className="h-[56px] border-[3px] border-black"
-                    />
-                  </div>
-                </div>
-
-                {/* Sub-Header: Location */}
-                <div className="flex flex-col md:flex-row justify-between items-center border-b-2 border-black/10 pb-4">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-black">Geospatial Telemetry</h3>
-                  <button
-                    type="button"
-                    onClick={handleGetCurrentLocation}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#FFB300] text-black border-[3px] border-black shadow-[4px_4px_0px_0px_#000] text-[0.7rem] font-black uppercase tracking-wider cursor-pointer active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
-                  >
-                    <MapPin className="w-4 h-4" /> Fetch My Coordinates
->>>>>>> 2a3da8a4bafc9095b2e627925177f443062db64e
-                  </button>
-
-                  <div>
-                    {lbl('Report Title')}
-                    <input type="text" required style={inp} placeholder="e.g. Water shortage in Block C"
-                      value={manualData.title} onChange={e => setManualData(d => ({ ...d, title: e.target.value }))} />
-                  </div>
-
-                  <div className="form-grid-2col">
-                    <div>
-                      {lbl('Category')}
-                      <select style={inp} value={manualData.category} onChange={e => setManualData(d => ({ ...d, category: e.target.value }))}>
-                        {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Water', 'Power', 'Other'].map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      {lbl('Urgency Score (1–5)')}
-                      <input type="number" min="1" max="5" required style={inp} value={manualData.urgencyScore}
-                        onChange={e => setManualData(d => ({ ...d, urgencyScore: e.target.value }))} />
-                    </div>
-                  </div>
-
-                  <div>
-                    {lbl('Approx Affected People')}
-                    <input type="number" min="0" style={inp} placeholder="e.g. 250"
-                      value={manualData.affectedPeople} onChange={e => setManualData(d => ({ ...d, affectedPeople: e.target.value }))} />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      {lbl('Coordinates')}
-                      <button type="button" onClick={useMyLocation}
-                        style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-                        onMouseDown={(e) => pressDown(e, '0px 0px 0 #000')} onMouseUp={(e) => pressUp(e, `3px 3px 0 ${WHITE}`)}>
-                        <MapPin style={{ width: 12, height: 12 }} /> Use My Location
+              <div>
+                {!showForm ? (
+                  /* LIST VIEW */
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: FG, margin: 0 }}>My Reports</p>
+                        <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)', margin: '4px 0 0' }}>
+                          {myReports.length} record{myReports.length !== 1 ? 's' : ''} found
+                        </p>
+                      </div>
+                      <button onClick={() => { resetForm(); setShowForm(true); }}
+                        style={primaryBtn({ width: 'auto', padding: '12px 20px' })}
+                        onMouseDown={pressDown} onMouseUp={pressUp}>
+                        <Plus style={{ width: 16, height: 16 }} /> Add New Report
                       </button>
                     </div>
-                    <div className="form-grid-2col">
-                      <div>
-                        {lbl('Latitude')}
-                        <input type="text" placeholder="e.g. 12.97" required style={inp} value={manualData.lat}
-                          onChange={e => setManualData(d => ({ ...d, lat: e.target.value }))} />
-                      </div>
-                      <div>
-                        {lbl('Longitude')}
-                        <input type="text" placeholder="e.g. 77.59" required style={inp} value={manualData.lng}
-                          onChange={e => setManualData(d => ({ ...d, lng: e.target.value }))} />
-                      </div>
-                    </div>
-                  </div>
 
-                  <div>
-                    {lbl('Description')}
-                    <textarea required style={{ ...inp, minHeight: 120, resize: 'vertical' }}
-                      value={manualData.description} onChange={e => setManualData(d => ({ ...d, description: e.target.value }))}
-                      placeholder="Describe the community need..." />
-                  </div>
-
-                  {/* Image Upload */}
-                  <div>
-                    {lbl('Images (optional)')}
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: uploadingImage ? 'not-allowed' : 'pointer', backgroundColor: 'var(--bg)', border: `2.5px dashed ${BLACK}`, padding: '14px 20px', opacity: uploadingImage ? 0.6 : 1 }}>
-                      <UploadCloud style={{ width: 18, height: 18, color: 'var(--muted-fg)', flexShrink: 0 }} />
-                      <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>
-                        {uploadingImage ? 'Uploading...' : 'Click to add images (JPG, PNG)'}
-                      </span>
-                      <input type="file" accept="image/jpeg,image/jpg,image/png" multiple style={{ display: 'none' }} disabled={uploadingImage} onChange={handleImageUpload} />
-                    </label>
-                    {imageUrls.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
-                        {imageUrls.map((url, i) => (
-                          <div key={i} style={{ position: 'relative', width: 90, height: 90, border: `2px solid ${BLACK}`, flexShrink: 0 }}>
-                            <img src={url} alt={`upload-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                            <button type="button" onClick={() => setImageUrls(prev => prev.filter((_, idx) => idx !== i))}
-                              style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, backgroundColor: CRIT, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
-                              ✕
-                            </button>
-                          </div>
-                        ))}
+                    {loadingReports ? (
+                      <div style={{ textAlign: 'center', padding: '3rem', fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', color: 'var(--muted-fg)' }}>Loading reports...</div>
+                    ) : myReports.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '4rem 2rem', border: `2.5px dashed ${BLACK}` }}>
+                        <FileText style={{ margin: '0 auto 1rem', width: 40, height: 40, color: 'var(--muted-fg)' }} />
+                        <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.9rem', textTransform: 'uppercase', color: FG, margin: '0 0 6px' }}>No Reports Yet</p>
+                        <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.7rem', color: 'var(--muted-fg)', margin: 0 }}>Click "Add New Report" to create your first report.</p>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {myReports.map((report) => {
+                          const sc = STATUS_COLORS[report.status] || { bg: BLACK, color: '#fff' };
+                          return (
+                            <div key={report._id} style={{ backgroundColor: 'var(--bg)', border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.95rem', color: FG, margin: '0 0 6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {report.title || report.description?.slice(0, 60) || 'Untitled Report'}
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                                  <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.6rem', backgroundColor: sc.bg, color: sc.color, padding: '2px 8px', border: `1.5px solid ${BLACK}`, fontWeight: 700 }}>
+                                    {report.status}
+                                  </span>
+                                  {report.category && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.category}</span>}
+                                  {report.urgency && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>Urgency {report.urgency}/5</span>}
+                                  {report.affectedPeople != null && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>~{report.affectedPeople} affected</span>}
+                                  {report.imageUrls?.length > 0 && <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{report.imageUrls.length} image{report.imageUrls.length !== 1 ? 's' : ''}</span>}
+                                  <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.65rem', color: 'var(--muted-fg)' }}>{new Date(report.createdAt).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                              {report.status === 'DRAFT' && (
+                                <button onClick={() => openEdit(report)}
+                                  style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '8px 16px', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                                  onMouseDown={(e) => pressDown(e, '0px 0px 0 #000')} onMouseUp={(e) => pressUp(e, `3px 3px 0 ${WHITE}`)}>
+                                  Edit Draft
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
-
-                  <div style={{ display: 'flex', gap: '1.5rem' }}>
-                    <button type="button" onClick={handleSaveDraft} disabled={isUploading} style={secondaryBtn({ flex: 1 })}
-                      onMouseDown={pressDown} onMouseUp={pressUp}>
-                      Save Draft
+                ) : (
+                  /* FORM VIEW */
+                  <form onSubmit={handleManualSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <button type="button" onClick={() => { setShowForm(false); resetForm(); setStatus('idle'); }}
+                      style={{ fontFamily: "'Plus Jakarta Sans',sans-serif", fontWeight: 900, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'transparent', color: FG, border: `2px solid ${BLACK}`, padding: '8px 16px', cursor: 'pointer', alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <ChevronLeft style={{ width: 14, height: 14 }} /> Back to Reports
                     </button>
-                    <button type="submit" disabled={isUploading} style={primaryBtn({ flex: 1 })}
-                      onMouseDown={pressDown} onMouseUp={pressUp}>
-                      {isUploading ? 'Submitting...' : 'Submit Survey'}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          )}
 
-          {status === 'success' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: SUCC, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <CheckCircle2 style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
-              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
-            </div>
-          )}
-          {status === 'error' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, display: 'flex', alignItems: 'center', gap: 12 }}>
-              <AlertCircle style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
-              <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
-            </div>
-          )}
+                    <div>
+                      {lbl('Report Title')}
+                      <input type="text" required style={inp} placeholder="e.g. Water shortage in Block C"
+                        value={manualData.title} onChange={e => setManualData(d => ({ ...d, title: e.target.value }))} />
+                    </div>
+
+                    <div className="form-grid-2col">
+                      <div>
+                        {lbl('Category')}
+                        <select style={inp} value={manualData.category} onChange={e => setManualData(d => ({ ...d, category: e.target.value }))}>
+                          {['Sanitation', 'Medical', 'Education', 'Infrastructure', 'Water', 'Power', 'Other'].map(c => <option key={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        {lbl('Urgency Score (1–5)')}
+                        <input type="number" min="1" max="5" required style={inp} value={manualData.urgencyScore}
+                          onChange={e => setManualData(d => ({ ...d, urgencyScore: e.target.value }))} />
+                      </div>
+                    </div>
+
+                    <div>
+                      {lbl('Approx Affected People')}
+                      <input type="number" min="0" style={inp} placeholder="e.g. 250"
+                        value={manualData.affectedPeople} onChange={e => setManualData(d => ({ ...d, affectedPeople: e.target.value }))} />
+                    </div>
+
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        {lbl('Coordinates')}
+                        <button type="button" onClick={useMyLocation}
+                          style={{ fontFamily: "'Space Mono',monospace", fontWeight: 700, fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: YLW, color: '#000', border: `2px solid ${BLACK}`, boxShadow: `3px 3px 0 ${WHITE}`, padding: '5px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+                          onMouseDown={(e) => pressDown(e, '0px 0px 0 #000')} onMouseUp={(e) => pressUp(e, `3px 3px 0 ${WHITE}`)}>
+                          <MapPin style={{ width: 12, height: 12 }} /> Use My Location
+                        </button>
+                      </div>
+                      <div className="form-grid-2col">
+                        <div>
+                          {lbl('Latitude')}
+                          <input type="text" placeholder="e.g. 12.97" required style={inp} value={manualData.lat}
+                            onChange={e => setManualData(d => ({ ...d, lat: e.target.value }))} />
+                        </div>
+                        <div>
+                          {lbl('Longitude')}
+                          <input type="text" placeholder="e.g. 77.59" required style={inp} value={manualData.lng}
+                            onChange={e => setManualData(d => ({ ...d, lng: e.target.value }))} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {lbl('Description')}
+                      <textarea required style={{ ...inp, minHeight: 120, resize: 'vertical' }}
+                        value={manualData.description} onChange={e => setManualData(d => ({ ...d, description: e.target.value }))}
+                        placeholder="Describe the community need..." />
+                    </div>
+
+                    {/* Image Upload */}
+                    <div>
+                      {lbl('Images (optional)')}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: uploadingImage ? 'not-allowed' : 'pointer', backgroundColor: 'var(--bg)', border: `2.5px dashed ${BLACK}`, padding: '14px 20px', opacity: uploadingImage ? 0.6 : 1 }}>
+                        <UploadCloud style={{ width: 18, height: 18, color: 'var(--muted-fg)', flexShrink: 0 }} />
+                        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.75rem', color: 'var(--muted-fg)' }}>
+                          {uploadingImage ? 'Uploading...' : 'Click to add images (JPG, PNG)'}
+                        </span>
+                        <input type="file" accept="image/jpeg,image/jpg,image/png" multiple style={{ display: 'none' }} disabled={uploadingImage} onChange={handleImageUpload} />
+                      </label>
+                      {imageUrls.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+                          {imageUrls.map((url, i) => (
+                            <div key={i} style={{ position: 'relative', width: 90, height: 90, border: `2px solid ${BLACK}`, flexShrink: 0 }}>
+                              <img src={url} alt={`upload-${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                              <button type="button" onClick={() => setImageUrls(prev => prev.filter((_, idx) => idx !== i))}
+                                style={{ position: 'absolute', top: 2, right: 2, width: 20, height: 20, backgroundColor: CRIT, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 900, fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1.5rem' }}>
+                      <button type="button" onClick={handleSaveDraft} disabled={isUploading} style={secondaryBtn({ flex: 1 })}
+                        onMouseDown={pressDown} onMouseUp={pressUp}>
+                        Save Draft
+                      </button>
+                      <button type="submit" disabled={isUploading} style={primaryBtn({ flex: 1 })}
+                        onMouseDown={pressDown} onMouseUp={pressUp}>
+                        {isUploading ? 'Submitting...' : 'Submit Survey'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+
+            {status === 'success' && (
+              <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: SUCC, border: `2.5px solid ${BLACK}`, boxShadow: `4px 4px 0 ${WHITE}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CheckCircle2 style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
+              </div>
+            )}
+            {status === 'error' && (
+              <div style={{ marginTop: '1.5rem', padding: '1rem 1.5rem', backgroundColor: CRIT, border: `2.5px solid ${BLACK}`, boxShadow: SHADOW, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <AlertCircle style={{ width: 20, height: 20, flexShrink: 0, color: '#FFFFFF' }} />
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: '0.8rem', fontWeight: 700, color: '#FFFFFF', margin: 0 }}>{message}</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>
