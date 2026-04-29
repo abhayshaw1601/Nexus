@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { CheckCircle, XCircle, Clock, MapPin, User, FileText, ClipboardCheck } from "lucide-react";
+import { CheckCircle, XCircle, Clock, MapPin, User, FileText, ClipboardCheck, X, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import Sidebar from "@/components/Sidebar";
 

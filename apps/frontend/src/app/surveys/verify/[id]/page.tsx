@@ -30,6 +30,7 @@ export default function VerifySurveyPage() {
       if (!token) return;
       
       try {
+        console.log(`Fetching survey from: ${process.env.NEXT_PUBLIC_API_URL}/surveys/${id}`);
         const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/surveys/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });

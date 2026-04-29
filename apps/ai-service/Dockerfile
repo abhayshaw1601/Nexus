@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -9,11 +9,17 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender1 \
+    libgomp1 \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Pre-install torch CPU to avoid massive CUDA dependencies and prevent build OOM/timeout
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy only the necessary files (handled by .dockerignore)
 COPY . .
 
 # Ensure the port is flexible for cloud providers

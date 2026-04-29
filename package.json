@@ -9,6 +9,8 @@
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:backend": "npm run dev --workspace=apps/backend",
     "dev:ai": "cd apps/ai-service && source venv/bin/activate && uvicorn main:app --reload",
+    "build": "npm run build --workspaces --if-present",
+    "start": "npm start --workspace=apps/backend",
     "install:all": "npm install && cd apps/ai-service && pip install -r requirements.txt",
     "seed": "npm run seed --workspace=apps/backend"
   }

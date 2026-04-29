@@ -24,6 +24,12 @@ export interface ISurvey extends Document {
     description: string;
     status: 'PENDING' | 'VERIFIED' | 'REJECTED';
   }>;
+  aiExtractedData?: {
+    rawText: string;
+    suggestedCategory?: string;
+    suggestedUrgency?: number;
+    suggestedDescription?: string;
+  };
   createdAt: Date;
 }
 
